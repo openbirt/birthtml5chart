@@ -12,7 +12,9 @@ Features:
 * Use JSON object to save chart options.
 * Support theme and animation.
 * Support event and interaction operation.
-
+* Provide runtime APIs to change chart visualization dynamically.
+* Support dynamic data update of chart.
+* Provide graphic 2d APIs to draw graph in chart.
 
 Roadmap:
 TBD ...
