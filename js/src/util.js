@@ -392,3 +392,21 @@ function adaptColorGradient(gradientOpts) {
         return {cx : params[0], cy : params[1], r : params[2], fx : params[3], fy : params[4]};
     }
 }
+
+/**
+ * {@link http://www.websiteoptimization.com/secrets/css/font-shorthand.html}
+ * <br>The syntax of the font: shorthand property is as follows:
+ * <br>
+ * font: &lt;font-style&gt; &lt;font-variant&gt; &lt;font-weight&gt; &lt;font-size&gt; / &lt;line-height&gt; &lt;fontfamily&gt;
+ * 
+ * @param fontOpts
+ * @returns
+ */
+function adaptFontShorthand(fontOpts) {
+	var fstyle = fontOpts;
+	if (isObject(fontOpts)) {
+		
+	}
+	return fstyle;
+	
+}

@@ -1,0 +1,24 @@
+{
+  "name": "birthtml5chart",
+  "version": "0.0.1",
+  "description": "A html5 chart library based on d3js library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openbirt/birthtml5chart.git"
+  },
+  "author": "Heng Li",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/openbirt/birthtml5chart/issues"
+  },
+  "homepage": "https://github.com/openbirt/birthtml5chart",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-concat": "^0.5.0",
+    "grunt-contrib-uglify": "^0.5.1"
+  }
+}
