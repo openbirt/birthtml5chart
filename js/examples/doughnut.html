@@ -37,6 +37,7 @@ var options = {
 		maxValue:200,
 		categories:['China', 'USA', 'Japan', 'UK'],
 		label: {
+			enabled: true,
 			value: function(d){
 				return d.category + ',' + formatPercent(d.percentValue);
 			},
@@ -46,6 +47,11 @@ var options = {
 				  'font-size': '24px',
 				  'font-weight': 'bold',
 			}
+		},
+		animation: {
+			enabled: true,
+			duration: 500,
+			ease:'cubic-in-out'
 		}
 	},
 	{
@@ -57,6 +63,7 @@ var options = {
 		data:[70, 90, 160, 200],
 		categories:['Shanghai', 'Beijin', 'Hangzhou', 'Nanjing'],
 		label: {
+			enabled:false,
 			value: function(d){
 				return d.category + ',' + formatPercent(d.percentValue);
 			},
@@ -70,6 +77,7 @@ var options = {
 	}],
 	categories:[],
 	text: {
+		enabled:true,
 		background:'',
 		fill: '#f00',
 		font: {
@@ -77,6 +85,11 @@ var options = {
 		  'font-size': '24px',
 		  'font-weight': 'bold',
 		}
+	},
+	animation: {
+		enabled: true,
+		duration: 500,
+		ease:'linear'
 	}
 }
 
@@ -84,6 +97,8 @@ var options = {
 var twoPi = Math.PI *2;
 var formatInt = d3.format('f0');
 var formatPercent = d3.format('.00%');
+var DEFAULT_DURATION = 750;
+var DEFAULT_EASE = 'cubic-in-out';
 
 function DonutChart() {
 	return this.init.apply(this, arguments);
@@ -106,12 +121,13 @@ DonutChart.prototype = {
 		donutPlot = donutPlot.append('g').attr('class', 'donutPlot');
 		
 		// Create central text.
-		text = donutPlot.append("text")
-	   	 .attr("text-anchor", "middle")
-	   	 .attr("dy", ".35em")
-	   	 .style('fill', opts.text.fill)
-	   	 .style(opts.text.font);
-		
+		if (opts.text && opts.text.enabled) {
+			text = donutPlot.append("text")
+	   	 		.attr("text-anchor", "middle")
+	   	 		.attr("dy", ".35em")
+	   	 		.style('fill', opts.text.fill)
+	   	 		.style(opts.text.font);
+		}
 		
 		var context = {};
 		context._this = this;
@@ -150,6 +166,7 @@ DonutChart.prototype = {
 		} else if (seriesOpts.outerRadius && seriesOpts.outerRadius.indexOf('%') >= 0) {
 			seriesOpts.outerRadius = min * parseFloat(seriesOpts.outerRadius) / 200;
 		}
+		seriesOpts.animation = $.extend({}, context.opts.animation || {}, seriesOpts.animation || {});
 		
 		// Generate each data of series.
 		for(j= 0; j <seriesOpts.data.length; j++) {
@@ -194,6 +211,7 @@ DonutChart.prototype = {
 		seriesData = context.seriesData,
 		data = context.seriesData[sliceIndex],
 		seriesOpts = context.opts.series[context.seriesIndex],
+		animation = seriesOpts.animation,
 		donutSeries = context.donutSeries,
 		text = context.text,
 		arc = d3.svg.arc()
@@ -209,22 +227,28 @@ DonutChart.prototype = {
 		.style('fill', data.fill)
 		.attr('d', arc)
 		.transition()
-		.duration(context.duration || 750)
+		.ease(animation.enabled ? (animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
+		.duration(animation.enabled ? (animation.duration || DEFAULT_DURATION) : 0)
 		.call(this.arcTween, context)
 		.each('end', function(d){
-			var t = donutSeries.append("text")
-			  .datum(data)
-		      .attr("dy", ".35em")
-		      .style("text-anchor", "middle")
-		      .style('fill', seriesOpts.label.fill)
-	   	 	  .style(seriesOpts.label.font)
-			  .text(seriesOpts.label.value)
-		      .attr('transform', 'translate(0, 0)')
-		      .transition()
-		      .duration(500)
-		      .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; });
-			
+			var t;
+			if (seriesOpts.label.enabled) {
+				t = donutSeries.append("text")
+			  	.attr('class', 'sliceLabel ' + sliceIndex)
+			  	.datum(data)
+		      	.attr("dy", ".35em")
+		      	.style("text-anchor", "middle")
+		      	.style('fill', seriesOpts.label.fill)
+	   	 	  	.style(seriesOpts.label.font)
+			  	.text(seriesOpts.label.value)
+		      	.attr('transform', 'translate(0, 0)')
+		      	.transition()
+		      	.ease(animation.enabled ? (animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
+		      	.duration(animation.enabled ? (animation.duration || DEFAULT_DURATION) : 0)
+		      	.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; });
+			}
 			context.sliceCallback.call(_this, context);
+			
 		})
 	},
 	sliceCallback : function(context) {
@@ -247,7 +271,9 @@ DonutChart.prototype = {
 			var interpolate = d3.interpolate(d.startAngle, d.endAngle);
 			return function(t) {
 				var angle = interpolate(t);
-				text.text(formatInt(d.value * (angle - d.startAngle ) / (d.endAngle - d.startAngle)));
+				if (text) {
+					text.text(formatInt(d.value * (angle - d.startAngle ) / (d.endAngle - d.startAngle)));
+				}
 				arc.endAngle(angle)
 				return arc();
 			}
