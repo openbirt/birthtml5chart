@@ -39,7 +39,7 @@ var options = {
 		categories:['China', 'USA', 'Japan', 'UK'],
 		label: {
 			enabled: true,
-			value: function(d){
+			format: function(d){
 				return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
 			},
 			fill:'#0f0',
@@ -65,7 +65,7 @@ var options = {
 		categories:['Shanghai', 'Beijin', 'Hangzhou', 'Nanjing'],
 		label: {
 			enabled:false,
-			value: function(d){
+			format: function(d){
 				return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
 			},
 			fill:'#0f0',
@@ -85,6 +85,9 @@ var options = {
 		  'font-family': '"Helvetica Neue", Helvetica, Arial, sans-serif',
 		  'font-size': '24px',
 		  'font-weight': 'bold',
+		},
+		format: function(d) {
+			return aCharts.Format.formatInt(d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle));
 		}
 	},
 	animation: {

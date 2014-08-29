@@ -14,7 +14,7 @@ var options = {
 		categories:['China', 'USA', 'Japan', 'UK'],
 		label: {
 			enabled: true,
-			value: function(d){
+			format: function(d){
 				return d.category + ',' + formatPercent(d.percentValue);
 			},
 			fill:'#0f0',
@@ -40,7 +40,7 @@ var options = {
 		categories:['Shanghai', 'Beijin', 'Hangzhou', 'Nanjing'],
 		label: {
 			enabled:false,
-			value: function(d){
+			format: function(d){
 				return d.category + ',' + formatPercent(d.percentValue);
 			},
 			fill:'#0f0',
@@ -60,6 +60,9 @@ var options = {
 		  'font-family': '"Helvetica Neue", Helvetica, Arial, sans-serif',
 		  'font-size': '24px',
 		  'font-weight': 'bold',
+		},
+		format: function(d) {
+			return d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle)
 		}
 	},
 	animation: {
@@ -224,7 +227,7 @@ DonutChart.prototype = {
 		      	.style("text-anchor", "middle")
 		      	.style('fill', seriesOpts.label.fill)
 	   	 	  	.style(seriesOpts.label.font)
-			  	.text(seriesOpts.label.value)
+			  	.text(seriesOpts.label.format, context)
 		      	.attr('transform', 'translate(0, 0)')
 		      	.transition()
 		      	.ease(animation.enabled ? (animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
@@ -256,7 +259,10 @@ DonutChart.prototype = {
 			return function(t) {
 				var angle = interpolate(t);
 				if (text) {
-					text.text(formatInt(d.value * (angle - d.startAngle ) / (d.endAngle - d.startAngle)));
+					var t = $.extend({}, d);
+					t.currAngle = angle;
+					text.datum(t);
+					text.text(context.opts.text.format, context);
 				}
 				arc.endAngle(angle)
 				return arc();
