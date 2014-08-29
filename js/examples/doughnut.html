@@ -17,15 +17,16 @@
 }
 
 </style>
-<body>
 <!-- script src="http://d3js.org/d3.v3.js"></script -->
 <script src="../bower_components/jquery/dist/jquery.js"></script>
 <script src="../bower_components/d3js/build/d3.v3.js"></script>
 <script src="../src/misc/donutChart.js"></script>
+<body>
+<div id="container" style="width:600px;height:400px;background-color:#FFFFCC;"></div>
 <script>
 var options = {
-	width: 600,
-	height: 600,
+	//width: 600,
+	//height: 600,
 	duration: 250,
 	series:[{
 		name: null,
@@ -94,7 +95,7 @@ var options = {
 }
 
 var donut = new aCharts.Donut(options);
-donut.render('body');
+donut.render('#container');
 
 </script>
 </body>

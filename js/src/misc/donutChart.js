@@ -90,6 +90,14 @@ DonutChart.prototype = {
     render:function(container) {
 		var donutPlot, text, opts = this.opts;
 		
+		// Init width and height
+		if(opts.width === undefined) {
+			opts.width = $(container).width();
+		}
+		if (opts.height === undefined) {
+			opts.height = $(container).height();
+		}
+		
 		this.svg = d3.select(container).append('svg');
 		donutPlot = this.svg.attr('width', opts.width)
 			.attr('height', opts.height)
