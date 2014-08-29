@@ -14,8 +14,10 @@ var options = {
 		categories:['China', 'USA', 'Japan', 'UK'],
 		label: {
 			enabled: true,
-			format: function(d){
-				return d.category + ',' + formatPercent(d.percentValue);
+			format: function(context){
+				return function(d) {
+					return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
+				}
 			},
 			fill:'#0f0',
 			font: {
@@ -40,8 +42,10 @@ var options = {
 		categories:['Shanghai', 'Beijin', 'Hangzhou', 'Nanjing'],
 		label: {
 			enabled:false,
-			format: function(d){
-				return d.category + ',' + formatPercent(d.percentValue);
+			format: function(context){
+				return function(d) {
+					return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
+				}
 			},
 			fill:'#0f0',
 			font: {
@@ -61,8 +65,11 @@ var options = {
 		  'font-size': '24px',
 		  'font-weight': 'bold',
 		},
-		format: function(d) {
-			return d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle)
+		format: function(context, data) {
+			return function(_data) {
+				var d = data || _data;
+				return aCharts.Format.formatInt(d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle));
+			}
 		}
 	},
 	animation: {
@@ -227,7 +234,7 @@ DonutChart.prototype = {
 		      	.style("text-anchor", "middle")
 		      	.style('fill', seriesOpts.label.fill)
 	   	 	  	.style(seriesOpts.label.font)
-			  	.text(seriesOpts.label.format, context)
+			  	.text(seriesOpts.label.format(context))
 		      	.attr('transform', 'translate(0, 0)')
 		      	.transition()
 		      	.ease(animation.enabled ? (animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
@@ -262,7 +269,7 @@ DonutChart.prototype = {
 					var t = $.extend({}, d);
 					t.currAngle = angle;
 					text.datum(t);
-					text.text(context.opts.text.format, context);
+					text.text(context.opts.text.format(context, t));
 				}
 				arc.endAngle(angle)
 				return arc();
