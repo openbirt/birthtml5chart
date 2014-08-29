@@ -1,5 +1,5 @@
 var DefaultTextOpts = {
-	value:'',
+	data:'',  
 	format:'',
 	font:'',
 	color:'',
@@ -7,10 +7,15 @@ var DefaultTextOpts = {
 	rotateMode:''
 };
 
-var Text = function(opts) {
-	this.opts = opts;
+var Text = extendClass('Text', null, Element, {
+	_fRender:function(_d3Sel) {
+		var texts = _d3Sel.selectAll(this.__classKey).data(toArray(this.options.data));
+		
+	},
+});
 
-	return this;
+function D3Data() {
+	
 }
 
 Text.prototype = {
@@ -19,7 +24,7 @@ Text.prototype = {
 		this.redraw();
 	},
 	redraw: function() {
-		var all = this.sel.selectAll('.text').data([this.opts]),
+		var all = this.sel.selectAll(this.__classAttr).data([this.opts]),
 		enterText = all.enter().append('svg:text');
 		
 		all.exit().remove();

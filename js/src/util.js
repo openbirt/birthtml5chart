@@ -87,7 +87,7 @@ function clone(obj) {
     var temp = new obj.constructor();
     for (var key in obj) {
         if (obj.hasOwnProperty(key)) {
-            temp[key] = d3c_clone(obj[key]);
+            temp[key] = clone(obj[key]);
         }
     }
     return temp;
@@ -106,7 +106,7 @@ function copy(obj) {
     var temp = {};
     for (var key in obj) {
         if (obj.hasOwnProperty(key)) {
-            temp[key] = d3c_copy(obj[key]);
+            temp[key] = copy(obj[key]);
         }
     }
     return temp;
@@ -144,7 +144,7 @@ function merge(a, b) {
         return a;
     }
     if (!a) {
-        return d3c_clone(b);
+        return clone(b);
     }
     
     for (var prop in b) {
@@ -152,7 +152,7 @@ function merge(a, b) {
             if (b[prop] === null || (typeof b[prop]) !== 'object') {
                 a[prop] = b[prop];
             } else {
-                a[prop] = d3c_merge(a[prop], b[prop]);
+                a[prop] = merge(a[prop], b[prop]);
             }
         }
     }
@@ -182,16 +182,13 @@ function extend(a, b) {
 /**
  * Define and extend class.
  * 
- * @param selfFunction
+ * @param self
  * @param pClass
  * @param protoObj
  * @returns
  */
-function extendClass(selfFunction, pClass, protoObj) {
+function extendClass(className, self, pClass, protoObj) {
     function constructor(container, chartContext, options) {
-        // Initialize private variable set.
-        this._p = {};
-        
         // Init this object.
         if (this.fInit) {
             this.fInit.apply(this, arguments);
@@ -199,10 +196,12 @@ function extendClass(selfFunction, pClass, protoObj) {
         return this;
     }
     
-    var newClass = selfFunction ? selfFunction : constructor;
+    var newClass = self ? self : constructor;
     newClass.prototype = pClass ? new pClass() : {};
-    d3c_extend(newClass.prototype, protoObj);
-    newClass.prototype.__super__ = pClass ? pClass.prototype : null;
+    extend(newClass.prototype, protoObj);
+    newClass.prototype.__super = pClass ? pClass.prototype : null;
+    newClass.prototype.__className = className; 
+    newClass.prototype.__classKey = '.' + className;
     return newClass;
 }
 
@@ -405,8 +404,49 @@ function adaptColorGradient(gradientOpts) {
 function adaptFontShorthand(fontOpts) {
 	var fstyle = fontOpts;
 	if (isObject(fontOpts)) {
-		
+		fstyle = '';
+		fstyle += fontOpts['font-style'] ? (fontOpts['font-style'] + ' '): ''; 
+ 		fstyle += fontOpts['font-variant'] ? (fontOpts['font-variant'] + ' ') : '';
+ 		fstyle += fontOpts['font-weight'] ? (fontOpts['font-weight'] + ' ') : '';
+ 		fstyle += fontOpts['font-size'] ? (fontOpts['font-size'] + ' ') : '';
+ 		fstyle += fontOpts['line-height'] ? (fontOpts['line-height'] + ' ') : '';
+ 		fstyle += fontOpts['font-family'] ? (fontOpts['font-family'] + ' ') : '';
 	}
 	return fstyle;
+}
+
+/**
+ * Converts optoins to array style as d3 data array.
+ * 
+ * @param options
+ * @returns Array of options
+ */
+function adaptOptsToD3Data(options) {
+	if (options instanceof Array) {
+		return options;
+	}
 	
+	if(options.data instanceof Array) {
+		var returnOpts = [], i;
+		for(i = 0; i < options.data.length; i++) {
+			returnOpts[i] = {};
+			returnOpts.data = options.data[i];
+			
+		}
+		
+	} else {
+		return [options];
+	}
+}
+
+/**
+ * Convert object to array style as d3 data array. 
+ * @param object
+ * @returns Array of object
+ */
+function toArray(object) {
+	if (object instanceof Array) {
+		return object;
+	}
+	return [object];
 }

@@ -8,7 +8,7 @@ module.exports = function(grunt){
 				separator:';'
 			},
 			dist: {
-				src: ['src/start.js','src/d3extension.js','src/core.js','src/util.js','src/text.js','src/label.js','src/end.js'],
+				src: ['src/start.js','src/d3extension.js','src/core.js','src/util.js','src/text.js','src/label.js','src/export.js', 'src/end.js'],
 				dest: 'build/<%= pkg.name %>.js'
 			}
 		},
