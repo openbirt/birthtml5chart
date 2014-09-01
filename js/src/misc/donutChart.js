@@ -228,7 +228,7 @@ DonutChart.prototype = {
 		.call(this.arcTween, context)
 		.each('end', function(d){
 			var t;
-			if (seriesOpts.label.enabled) {
+			if (seriesOpts.label && seriesOpts.label.enabled) {
 				t = donutSeries.append("text")
 			  	.attr('class', 'sliceLabel ' + sliceIndex)
 			  	.datum(data)
