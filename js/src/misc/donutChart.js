@@ -8,7 +8,7 @@ var options = {
 		background:'#ddd',
 		innerRadius:'30%',
 		outerRadius:'60%',
-		colors:d3.scale.category20(),
+		colors:d3.scale.category20().range(),
 		data:[30, 50, 60, 20],
 		maxValue:200,
 		categories:['China', 'USA', 'Japan', 'UK'],
@@ -37,7 +37,7 @@ var options = {
 		background:'#ddd',
 		innerRadius:'70%',
 		outerRadius:'90%',
-		colors:d3.scale.category20c(),
+		colors:d3.scale.category20c().range(),
 		data:[70, 90, 160, 200],
 		categories:['Shanghai', 'Beijin', 'Hangzhou', 'Nanjing'],
 		label: {
@@ -151,6 +151,8 @@ DonutChart.prototype = {
 		i, 
 		j;
 		
+		donutSeries.datum(seriesOpts);
+		
 		// Convert percent radius to absolute radius.
 		if (seriesOpts.innerRadius && seriesOpts.innerRadius.indexOf('%') >= 0) {
 			seriesOpts.innerRadius = min * parseFloat(seriesOpts.innerRadius) / 200;
@@ -170,7 +172,7 @@ DonutChart.prototype = {
 			data.startAngle = lastAngle;
 			data.endAngle = lastAngle + data.percentValue * twoPi;
 			data.category = (seriesOpts.categories && seriesOpts.categories[j])  || (opts.categories && opts.categories[j]);
-			data.fill = (seriesOpts.colors || d3.scale.category20()).range()[j % 20];
+			data.fill = (seriesOpts.colors || d3.scale.category20())[j % 20];
 			
 			lastAngle = data.endAngle;
 			
