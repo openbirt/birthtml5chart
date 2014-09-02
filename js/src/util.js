@@ -450,3 +450,23 @@ function toArray(object) {
 	}
 	return [object];
 }
+
+function toCssStyle(style) {
+    if (typeof style === 'object') {
+        for (var key in style) {
+            if (style.hasOwnProperty(key)) {
+                var newKey = toCssStyle(key);
+                if (newKey !== key) {
+                    style[newKey] = style[key];
+                    style[key] = null;
+                    delete style[key];
+                }
+            }
+        }
+        return style;
+    } else {
+        return style ? style.replace(/([A-Z])/g, function (m, s) {
+            return '-' + s.toLowerCase();
+        }) : style;
+    }
+}

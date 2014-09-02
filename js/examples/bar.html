@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.progress-meter .background {
+  fill: #ccc;
+}
+
+.progress-meter .foreground {
+  fill: #000;
+}
+
+.progress-meter text {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+</style>
+<!-- script src="http://d3js.org/d3.v3.js"></script -->
+<script src="../bower_components/jquery/dist/jquery.js"></script>
+<script src="../bower_components/d3js/build/d3.v3.js"></script>
+<script src="../src/misc/donutChart.js"></script>
+<script src="../src/misc/barChart.js"></script>
+<body>
+<div id="container" style="width:600px;height:400px;background-color:#FFFFCC;"></div>
+<script>
+var options = {
+			mode: 'horizonal', // vertial or horizontal ,default is horizontal
+			width:600,
+			height:400,
+			padding: {
+				top:20,
+				right:20,
+				bottom:20,
+				left:20
+			},
+			fillStyle:{
+				fill: '#FFFFCC',
+				fillOpacity:1,
+				stroke:'black',
+				strokeWidth:1,
+				strokeOpacity:0.5
+			},
+			animation: {
+				enabled: true,
+				mode:'oneByOne', // 'oneByOne' or 'both'
+				ease: null,
+				duration: 1000
+			},
+			plot:{
+				fill: '#FFFF99',
+				fillOpacity:1,
+				stroke:'red',
+				strokeWidth:1,
+				strokeOpacity:0.5
+			},
+			xAxis: {
+				type:null,
+				line:{
+					fill:'none',
+					stroke:'green',
+					strokeWidth:1,
+					strokeOpacity:0.5
+				},
+				tick:{
+					number:10,
+					fillStyle:{
+						stroke:'green',
+						strokeWidth:2,
+						strokeOpacity:0.5
+					}
+				},
+				label:{
+					enabled:true,
+					fillStyle:{
+						fill:'',
+					},
+					fontStyle:{},
+					format:null
+				}
+			},
+			yAxis: {
+				type:null,
+				line:{
+					stroke:'black',
+					strokeWidth:1,
+					strokeOpacity:0.5
+				},
+				tick:{
+					number:10,
+					fillStyle:{
+						stroke:'black',
+						strokeWidth:1,
+						strokeOpacity:0.5
+					}
+				},
+				label:{
+					enabled:true,
+					fillStyle:{
+						fill:'',
+					},
+					fontStyle:{},
+					format: null
+				}
+			},
+			series:[{
+				enabled:true,
+				data:[100, 200, 150, 170],
+				label:{
+					enabled: true,
+					fontStyle: {
+						  'font-family': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+						  'font-size': '24px',
+						  'font-weight': 'bold',
+					}
+				},
+				colors:d3.scale.category20().range(),
+				fillStyle:{
+					fill: '#CCCCCC',
+					fillOpacity:1,
+					stroke:'#999999',
+					strokeWidth:2,
+					strokeOpacity:0.5
+				},
+				width: '50%'
+			},
+			{
+				enabled:true,
+				data:[80, 100, 110, 90],
+				label:{
+					enabled: true,
+					format: function(d, context){
+						return d.value;
+					},
+					fontStyle: {
+						  'font-family': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+						  'font-size': '24px',
+						  'font-weight': 'bold',
+					}
+				},
+				colors:d3.scale.category20().range(),
+
+				width: '50%'
+			}],
+			categories:{
+				type:null,
+				data:['a', 'b', 'c', 'd']
+			}
+	}
+
+var bar = new aCharts.Bar(options);
+bar.render('#container');
+
+</script>
+</body>

@@ -1,3 +1,7 @@
+/**
+ * A donut chart based on d3js
+ * @author: Heng Li(Henry)
+ */
 (function() {
 var options = {
 	width: 600,
@@ -6,6 +10,7 @@ var options = {
 	series:[{
 		name: null,
 		background:'#ddd',
+		backgroundOpacity: 1,
 		innerRadius:'30%',
 		outerRadius:'60%',
 		colors:d3.scale.category20().range(),
@@ -16,7 +21,7 @@ var options = {
 			enabled: true,
 			format: function(context){
 				return function(d) {
-					return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
+					return d.category + ',' + aCharts.format.formatPercent(d.percentValue);
 				}
 			},
 			fill:'#0f0',
@@ -30,6 +35,13 @@ var options = {
 			enabled: true,
 			duration: 500,
 			ease:'cubic-in-out'
+		},
+		sliceStyle: {
+			stroke: '',
+			strokeWidth: '',
+			strokeOpacity: '',
+			fill:'',
+			fillOpacity:''
 		}
 	},
 	{
@@ -44,7 +56,7 @@ var options = {
 			enabled:false,
 			format: function(context){
 				return function(d) {
-					return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
+					return d.category + ',' + aCharts.format.formatPercent(d.percentValue);
 				}
 			},
 			fill:'#0f0',
@@ -68,7 +80,7 @@ var options = {
 		format: function(context, data) {
 			return function(_data) {
 				var d = data || _data;
-				return aCharts.Format.formatInt(d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle));
+				return aCharts.format.formatInt(d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle));
 			}
 		}
 	},
@@ -144,7 +156,7 @@ DonutChart.prototype = {
 		seriesOpts = context.opts.series[seriesIndex],
 		donutPlot = context.donutPlot,
 		donutSeries = donutPlot.append('g').attr('class', 'series donutSeries ' + (seriesOpts.name || seriesIndex)),
-		total = d3.max([this.getTotal(seriesOpts.data), (seriesOpts.maxValue || 0)]),
+		total = seriesOpts.maxValue ? seriesOpts.maxValue : d3.max([this.getTotal(seriesOpts.data), (seriesOpts.maxValue || 0)]),
 		lastAngle = 0, 
 		min = d3.min([context.opts.width, context.opts.height]),
 		data,
@@ -172,8 +184,8 @@ DonutChart.prototype = {
 			data.startAngle = lastAngle;
 			data.endAngle = lastAngle + data.percentValue * twoPi;
 			data.category = (seriesOpts.categories && seriesOpts.categories[j])  || (opts.categories && opts.categories[j]);
-			data.fill = (seriesOpts.colors || d3.scale.category20())[j % 20];
-			
+			data.style = $.extend({}, toCssStyle(seriesOpts.sliceStyle));
+			data.style.fill = data.style.fill || (seriesOpts.colors || d3.scale.category20())[j % 20];
 			lastAngle = data.endAngle;
 			
 			seriesOpts.data[j] = data;
@@ -187,9 +199,15 @@ DonutChart.prototype = {
 		
 		donutSeries.append("path")
 	    .attr("class", "background")
-	    .style('fill', seriesOpts.background)
 	    .attr("d", arc.endAngle(twoPi));
 
+		if (seriesOpts.background) {
+			donutSeries.style('fill', seriesOpts.background);
+		}
+		if (seriesOpts.backgroundOpacity) {
+			donutSeries.style('fill-opacity', seriesOpts.backgroundOpacity);
+		}
+		
 		context.donutSeries = donutSeries;
 		this.onRenderSlice(context);
 	},
@@ -220,7 +238,7 @@ DonutChart.prototype = {
 		donutSeries.append('path')
 		.datum(data)
 		.attr('class', 'slice ' + sliceIndex )
-		.style('fill', data.fill)
+		.style(data.style)
 		.attr('d', arc)
 		.transition()
 		.ease(animation.enabled ? (animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
@@ -287,11 +305,36 @@ DonutChart.prototype = {
 	}
 }
 
+function toCssStyle(style) {
+    if (typeof style === 'object') {
+        for (var key in style) {
+            if (style.hasOwnProperty(key)) {
+                var newKey = toCssStyle(key);
+                if (newKey !== key) {
+                    style[newKey] = style[key];
+                    style[key] = null;
+                    delete style[key];
+                }
+            }
+        }
+        return style;
+    } else {
+        return style ? style.replace(/([A-Z])/g, function (m, s) {
+            return '-' + s.toLowerCase();
+        }) : style;
+    }
+}
+
 aCharts = {};
-aCharts.Format = {};
-aCharts.Format.formatInt = formatInt;
-aCharts.Format.formatPercent = formatPercent;
+aCharts.format = {};
+aCharts.format.formatInt = formatInt;
+aCharts.format.formatPercent = formatPercent;
 aCharts.TWO_PI = twoPi;
+aCharts.DEFAULT_DURATION = DEFAULT_DURATION;
+aCharts.DEFAULT_EASE = DEFAULT_EASE;
+
+aCharts.util = {};
+aCharts.util.toCssStyle = toCssStyle;
 
 aCharts.Donut = DonutChart;
 window.aCharts = window.aCharts || aCharts;

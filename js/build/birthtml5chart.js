@@ -32,6 +32,21 @@ d3.selection.prototype.bbox = function (refresh) {
 };
 
 d3.transition.prototype.bbox = d3.selection.prototype.bbox;;/**
+ * Specification:
+ * 1. Use css properties as default options.
+ * 2. Variable starting with '_' means private object. e.g. _width indicates width of object, as default, other class should not access this variable.
+ * 3. Variable starting with '__' means remained object. e.g. Class.__super indicates parent class
+ * 4. All private functions should start with '_f', all other functions should start with 'f'.
+ * 5. Constants are defined in prototype object and use UPPER case.
+ * 6. Every element includes prototype functions fInit, fOptins, fRender, fRedraw, fApplyChange, fBBox, fDestory; and prototype properties __class_name, __super, options, context.    
+ */
+
+var Global = {
+    lazyRender: true,
+    prefix: 'd3charts'
+};
+
+/**
  * New node file
  */
 var Element = function() {};
@@ -42,9 +57,118 @@ var Axis = function(){};
 var Legend = function(){};
 var LegendItem = function(){};
 var Title = function(){};
+
 var ChartContext = function() {};
 var Chart = function() {};
-var Tooltip = function(){};;/** Check if specified value is number.
+var Tooltip = function(){};
+
+
+var Context = extendClass('Context', null, Object, {
+	prefix: null,
+	lazyRender: null,
+	fInit: function() {
+		this.prefix = Global.prefix;
+		this.lazyRender = Global.lazyRender;
+	}
+});
+
+
+/**
+ * This class defines two abstract callbacks for user to do custom process during rendering.
+ */
+var RendererCallback = extendClass('RenderCallback', null, null, {
+    fBeforeRendering: function () {
+        
+    },
+    fAfterRendering: function () {
+        
+    }
+});
+
+/**
+ * Element class is base class of chart.
+ */
+var Element = extendClass('Element', null, RendererCallback,  {
+    __className: null,
+    __classKey: null,
+	__super: null,
+    context: null,
+    parent: null,
+    options: null,
+    d3Sel: null,
+    isRendered: false,
+    fInit: function(_context, _parent, _options) {
+        this.context = _context;
+        this.parent = _parent;
+    	this.options = _options || {};
+    },
+    fOptions: function () {
+        if (!arguments.length) {
+            return this.options;
+        } else {
+            this.options = arguments[0];
+            return this.fApplyChange(this.fOptions);
+        }
+    },
+    fApplyChange: function (callerFunction) {
+        if (!this.context.lazyRender) {
+            this.fRedraw();
+        }
+        return this;
+    },
+    fRender: function (_d3Sel) {
+    	this.d3Sel = _d3Sel;
+        this.fBeforeRendering.apply(this, arguments);
+        this._fRender.apply(this, arguments);
+        this.isRendered = true;
+        this.fAfterRendering.apply(this, arguments);
+        return this;
+    },
+    _fRender: function (_d3Sel) {
+        // Do nothing in abstract method.
+        return this;
+    },
+    fRedraw: function () {
+        // Only render element after destory successfully. Before first
+        // rendering, the element have not been rendered, so it is forbidden to
+        // redraw.
+        if (this.d3Sel && this.fDestory()) {
+            this.fRender(this.d3Sel);
+        }
+        
+        return this;
+    },
+    fAttr: function () {
+        var type = null;
+        if (this.d3Sel) {
+            if (arguments.length === 1) {
+                type = typeof arguments[0];
+                if (type === 'string') {
+                    return this.d3Sel.attr(arguments[0]);
+                } else if (type === 'object') {
+                    this.d3Sel.attr.apply(this, arguments);
+                }
+            } else if (arguments.length) {
+                this.d3Sel.attr.apply(this, arguments);
+            }
+        }
+        
+        return this;
+    },
+    fBBox: function () {
+    	 return this.d3Sel ? copy(this.d3Sel.bbox()): {};
+    },
+    fDestory: function () {
+        if (this.d3Sel) {
+            this.d3Sel.selectAll('*').remove();
+            //delete this;
+            this.isRendered = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
+});;/** Check if specified value is number.
  * 
  * @param v
  * @returns {Boolean}
@@ -133,7 +257,7 @@ function clone(obj) {
     var temp = new obj.constructor();
     for (var key in obj) {
         if (obj.hasOwnProperty(key)) {
-            temp[key] = d3c_clone(obj[key]);
+            temp[key] = clone(obj[key]);
         }
     }
     return temp;
@@ -152,7 +276,7 @@ function copy(obj) {
     var temp = {};
     for (var key in obj) {
         if (obj.hasOwnProperty(key)) {
-            temp[key] = d3c_copy(obj[key]);
+            temp[key] = copy(obj[key]);
         }
     }
     return temp;
@@ -190,7 +314,7 @@ function merge(a, b) {
         return a;
     }
     if (!a) {
-        return d3c_clone(b);
+        return clone(b);
     }
     
     for (var prop in b) {
@@ -198,7 +322,7 @@ function merge(a, b) {
             if (b[prop] === null || (typeof b[prop]) !== 'object') {
                 a[prop] = b[prop];
             } else {
-                a[prop] = d3c_merge(a[prop], b[prop]);
+                a[prop] = merge(a[prop], b[prop]);
             }
         }
     }
@@ -228,16 +352,13 @@ function extend(a, b) {
 /**
  * Define and extend class.
  * 
- * @param selfFunction
+ * @param self
  * @param pClass
  * @param protoObj
  * @returns
  */
-function extendClass(selfFunction, pClass, protoObj) {
+function extendClass(className, self, pClass, protoObj) {
     function constructor(container, chartContext, options) {
-        // Initialize private variable set.
-        this._p = {};
-        
         // Init this object.
         if (this.fInit) {
             this.fInit.apply(this, arguments);
@@ -245,10 +366,12 @@ function extendClass(selfFunction, pClass, protoObj) {
         return this;
     }
     
-    var newClass = selfFunction ? selfFunction : constructor;
+    var newClass = self ? self : constructor;
     newClass.prototype = pClass ? new pClass() : {};
-    d3c_extend(newClass.prototype, protoObj);
-    newClass.prototype.__super__ = pClass ? pClass.prototype : null;
+    extend(newClass.prototype, protoObj);
+    newClass.prototype.__super = pClass ? pClass.prototype : null;
+    newClass.prototype.__className = className; 
+    newClass.prototype.__classKey = '.' + className;
     return newClass;
 }
 
@@ -451,12 +574,73 @@ function adaptColorGradient(gradientOpts) {
 function adaptFontShorthand(fontOpts) {
 	var fstyle = fontOpts;
 	if (isObject(fontOpts)) {
-		
+		fstyle = '';
+		fstyle += fontOpts['font-style'] ? (fontOpts['font-style'] + ' '): ''; 
+ 		fstyle += fontOpts['font-variant'] ? (fontOpts['font-variant'] + ' ') : '';
+ 		fstyle += fontOpts['font-weight'] ? (fontOpts['font-weight'] + ' ') : '';
+ 		fstyle += fontOpts['font-size'] ? (fontOpts['font-size'] + ' ') : '';
+ 		fstyle += fontOpts['line-height'] ? (fontOpts['line-height'] + ' ') : '';
+ 		fstyle += fontOpts['font-family'] ? (fontOpts['font-family'] + ' ') : '';
 	}
 	return fstyle;
+}
+
+/**
+ * Converts optoins to array style as d3 data array.
+ * 
+ * @param options
+ * @returns Array of options
+ */
+function adaptOptsToD3Data(options) {
+	if (options instanceof Array) {
+		return options;
+	}
 	
+	if(options.data instanceof Array) {
+		var returnOpts = [], i;
+		for(i = 0; i < options.data.length; i++) {
+			returnOpts[i] = {};
+			returnOpts.data = options.data[i];
+			
+		}
+		
+	} else {
+		return [options];
+	}
+}
+
+/**
+ * Convert object to array style as d3 data array. 
+ * @param object
+ * @returns Array of object
+ */
+function toArray(object) {
+	if (object instanceof Array) {
+		return object;
+	}
+	return [object];
+}
+
+function toCssStyle(style) {
+    if (typeof style === 'object') {
+        for (var key in style) {
+            if (style.hasOwnProperty(key)) {
+                var newKey = toCssStyle(key);
+                if (newKey !== key) {
+                    style[newKey] = style[key];
+                    style[key] = null;
+                    delete style[key];
+                }
+            }
+        }
+        return style;
+    } else {
+        return style ? style.replace(/([A-Z])/g, function (m, s) {
+            return '-' + s.toLowerCase();
+        }) : style;
+    }
 };var DefaultTextOpts = {
-	value:'',
+	data:'',  
 	format:'',
 	font:'',
 	color:'',
@@ -464,10 +648,15 @@ function adaptFontShorthand(fontOpts) {
 	rotateMode:''
 };
 
-var Text = function(opts) {
-	this.opts = opts;
+var Text = extendClass('Text', null, Element, {
+	_fRender:function(_d3Sel) {
+		var texts = _d3Sel.selectAll(this.__classKey).data(toArray(this.options.data));
+		
+	},
+});
 
-	return this;
+function D3Data() {
+	
 }
 
 Text.prototype = {
@@ -476,7 +665,7 @@ Text.prototype = {
 		this.redraw();
 	},
 	redraw: function() {
-		var all = this.sel.selectAll('.text').data([this.opts]),
+		var all = this.sel.selectAll(this.__classAttr).data([this.opts]),
 		enterText = all.enter().append('svg:text');
 		
 		all.exit().remove();
@@ -518,6 +707,14 @@ Label.prototype = {
 
 	}
 }
+;/**
+ * New node file
+ */
+var birtchart = birtchart || {};
+birtchart.Global = Global;
+
+
+window.birtchart = window.birtchart || birtchart;
 ;/**
  * New node file
  */

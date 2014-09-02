@@ -10,6 +10,10 @@ module.exports = function(grunt){
 			dist: {
 				src: ['src/start.js','src/d3extension.js','src/core.js','src/util.js','src/text.js','src/label.js','src/export.js', 'src/end.js'],
 				dest: 'build/<%= pkg.name %>.js'
+			},
+			aChartsDist: {
+				src: ['src/misc/donutChart.js/', 'src/misc/barChart.js'],
+				dest: 'build/aCharts.js'
 			}
 		},
 		uglify: {
@@ -18,7 +22,8 @@ module.exports = function(grunt){
 			},
 			dist: {
 				files: {
-					'dist/<%= pkg.name %>.min.js':['<%= concat.dist.dest %>']
+					'dist/<%= pkg.name %>.min.js':['<%= concat.dist.dest %>'],
+					'dist/aChart.min.js':['<%= concat.aChartsDist.dest %>']
 				}
 			}
 		}
