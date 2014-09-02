@@ -4,7 +4,7 @@
  */
 (function(){
 	var options = {
-			mode: 'horizonal', // vertial or horizontal ,default is horizontal
+			mode: 'horizontal', // vertial or horizontal ,default is horizontal
 			width:600,
 			height:400,
 			padding: {
@@ -91,6 +91,12 @@
 						  'font-family': '"Helvetica Neue", Helvetica, Arial, sans-serif',
 						  'font-size': '24px',
 						  'font-weight': 'bold',
+					},
+					animation: {
+						enabled: true,
+						mode:'oneByOne', // 'oneByOne' or 'both'
+						ease: null,
+						duration: 1000
 					}
 				},
 				colors:d3.scale.category20().range(),
@@ -125,8 +131,8 @@
 				type:null,
 				data:['a', 'b', 'c', 'd']
 			}
-	}
-	
+	};
+
 	function Bar() {
 		return this.init.apply(this, arguments);
 	}
@@ -340,13 +346,19 @@
 				return d.label.format !== false ? (d.label.format ? d.label.format.call(this, d, context) : d.value): '';})
 			.each(function(d){
 				var label = d3.select(this);
-				label.style(toCssStyle(d.label.fillStyle));
-				label.style(toCssStyle(d.label.fontStyle));
-				label.attr('text-anchor', d.label.align);
-			})
-			.attr("x", function(d) { return context.isVertical ? x(d.category)  + xRangeBand / 2: y(d.value); })
-			.attr("y", context.isVertical ? function(d) { return y(d.value); } : function(d) {return x(d.category) + xRangeBand /2;})
-			.attr('dy', context.isVertical ? '0em' : '.5em');
+				
+				label.style(toCssStyle(d.label.fillStyle))
+				.style(toCssStyle(d.label.fontStyle))
+				.attr('text-anchor', d.label.align)
+				.attr("x", context.isVertical ? x(d.category)  + xRangeBand / 2: 0)
+				.attr("y", context.isVertical ? context.remainedBox.h :  x(d.category) + xRangeBand /2)
+				.transition()
+				.duration((d.label.animation.enabled!== false) ? (d.label.animation.duration || DEFAULT_DURATION) : DEFAULT_DURATION)
+				.ease((d.label.animation.enabled!== false) ? (d.label.animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
+				.attr("x", context.isVertical ? x(d.category)  + xRangeBand / 2: y(d.value))
+				.attr("y", context.isVertical ? y(d.value): x(d.category) + xRangeBand /2)
+				.attr('dy', context.isVertical ? '0em' : '.5em');
+			});
 			
 		},
 		adaptAxis: function(context) {
@@ -377,6 +389,7 @@
 					nd.fillStyle = $.extend({}, s.fillStyle, nd.fillStyle);
 					nd.fillStyle.fill = nd.fillStyle.fill || (s.colors|| d3.scale.category20().range())[ j % s.data.length];
 					nd.label = $.extend({}, s.label);
+					nd.label.animation = $.extend({}, s.animation, nd.label.animation);
 					s.data[j] = nd; 
 					
 					extent = d3.extent(extent.concat(d3.extent([nd.value])));

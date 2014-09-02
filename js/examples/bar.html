@@ -26,7 +26,7 @@
 <div id="container" style="width:600px;height:400px;background-color:#FFFFCC;"></div>
 <script>
 var options = {
-			mode: 'horizonal', // vertial or horizontal ,default is horizontal
+			mode: 'horizontal', // vertial or horizontal ,default is horizontal
 			width:600,
 			height:400,
 			padding: {
@@ -113,6 +113,12 @@ var options = {
 						  'font-family': '"Helvetica Neue", Helvetica, Arial, sans-serif',
 						  'font-size': '24px',
 						  'font-weight': 'bold',
+					},
+					animation: {
+						enabled: true,
+						mode:'oneByOne', // 'oneByOne' or 'both'
+						ease: null,
+						duration: 1000
 					}
 				},
 				colors:d3.scale.category20().range(),
