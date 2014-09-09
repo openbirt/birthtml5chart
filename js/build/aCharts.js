@@ -728,7 +728,8 @@ DonutChart.prototype = {
 				.ease((d.label.animation.enabled!== false) ? (d.label.animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
 				.attr("x", context.isVertical ? x(d.category)  + xRangeBand / 2: y(d.value))
 				.attr("y", context.isVertical ? y(d.value): x(d.category) + xRangeBand /2)
-				.attr('dy', context.isVertical ? '0em' : '.5em')
+				.attr('dx', d.label.dx ? d.label.dx : (context.isVertical ? '.5em' : '0em'))
+				.attr('dy', d.label.dy ? d.label.dy : (context.isVertical ? '0em' : '.5em'))
 				.each('start', function(){
 					context.transitionCount++;
 				})
