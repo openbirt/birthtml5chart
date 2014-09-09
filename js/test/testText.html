@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script type="text/javascript" src="../lib/d3.v3.js"></script>
+<script type="text/javascript" src="../build/birthtml5chart.js"></script>
+</head>
+<body>
+<svg id="chart"></svg>
+<script>
+(function(){
+	var svg = d3.select('#chart');
+	var g = svg.append('g').attr('class', 'group');
+	svg.attr({'x': 0, 'y': 0, 'width': 800, 'height':600});
+	
+	var opts = {
+			data:['This is a text.', 'That is a text'],  
+			x: 100,
+			y: function(d, i){
+				return i * 100;
+			},
+			dy: '1em',
+			textAnchor:'middle',
+			format:null, // This is a format pattern or a function
+			font:{
+				fontSize:'30',
+				
+			}, 
+			border:{
+				stroke:'red',
+				strokeWidth:5,
+				strokeOpacity:0.5
+			}, 
+			color:{
+				fill:'green',
+				fillOpacity:1
+			}, 
+			rotate:{
+				degree:45,
+				mode:'start'
+			}
+		};
+	
+	var context = new birtchart.Context();
+	var text = new birtchart.Text(context, null, opts);
+	text.fRender(g);
+})()
+</script>
+</body>
+</html>
