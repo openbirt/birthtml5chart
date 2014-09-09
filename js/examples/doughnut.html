@@ -20,7 +20,7 @@
 <!-- script src="http://d3js.org/d3.v3.js"></script -->
 <script src="../bower_components/jquery/dist/jquery.js"></script>
 <script src="../bower_components/d3js/build/d3.v3.js"></script>
-<script src="../src/misc/donutChart.js"></script>
+<script src="../build/aCharts.js"></script>
 <body>
 <div id="container" style="width:600px;height:400px;background-color:#FFFFCC;"></div>
 <script>
@@ -33,7 +33,7 @@ var options = {
 		background:'#ddd',
 		innerRadius:'30%',
 		outerRadius:'60%',
-		colors:d3.scale.category20(),
+		colors:d3.scale.category20().range(),
 		data:[30, 50, 60, 20],
 		maxValue:200,
 		categories:['China', 'USA', 'Japan', 'UK'],
@@ -41,7 +41,7 @@ var options = {
 			enabled: true,
 			format: function(context){
 				return function(d) {
-					return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
+					return d.category + ',' + aCharts.format.formatPercent(d.percentValue);
 				}
 			},
 			fill:'#0f0',
@@ -62,14 +62,14 @@ var options = {
 		background:'#ddd',
 		innerRadius:'70%',
 		outerRadius:'90%',
-		colors:d3.scale.category20c(),
+		colors:d3.scale.category20c().range(),
 		data:[70, 90, 160, 200],
 		categories:['Shanghai', 'Beijin', 'Hangzhou', 'Nanjing'],
 		label: {
 			enabled:false,
 			format: function(context){
 				return function(d) {
-					return d.category + ',' + aCharts.Format.formatPercent(d.percentValue);
+					return d.category + ',' + aCharts.format.formatPercent(d.percentValue);
 				}
 			},
 			fill:'#0f0',
@@ -93,7 +93,7 @@ var options = {
 		format: function(context, data) {
 			return function(_data) {
 				var d = data || _data;
-				return aCharts.Format.formatInt(d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle));
+				return aCharts.format.formatInt(d.value * (d.currAngle - d.startAngle ) / (d.endAngle - d.startAngle));
 			}
 		}
 	},

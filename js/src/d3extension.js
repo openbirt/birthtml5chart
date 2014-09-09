@@ -27,3 +27,7 @@ d3.selection.prototype.bbox = function (refresh) {
 };
 
 d3.transition.prototype.bbox = d3.selection.prototype.bbox;
+
+d3.selection.prototype.opts = function() {
+	return arguments.length ? this.property("__opts__", value) : this.property("__opts__");
+};

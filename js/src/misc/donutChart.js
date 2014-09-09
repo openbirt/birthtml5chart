@@ -2,8 +2,8 @@
  * A donut chart based on d3js
  * @author: Heng Li(Henry)
  */
-(function() {
-var options = {
+
+var donutChartDefaultOptions = {
 	width: 600,
 	height: 600,
 	duration: 250,
@@ -88,15 +88,12 @@ var options = {
 		enabled: true,
 		duration: 500,
 		ease:'linear'
+	},
+	on: {
+		end:null
 	}
 }
 
-
-var twoPi = Math.PI *2;
-var formatInt = d3.format('f0');
-var formatPercent = d3.format('.00%');
-var DEFAULT_DURATION = 750;
-var DEFAULT_EASE = 'cubic-in-out';
 
 function DonutChart() {
 	return this.init.apply(this, arguments);
@@ -136,6 +133,7 @@ DonutChart.prototype = {
 		}
 		
 		var context = {};
+		context.transitionCount = 0;
 		context._this = this;
 		context.opts = opts;
 		context.seriesIndex = 0;
@@ -166,12 +164,12 @@ DonutChart.prototype = {
 		donutSeries.datum(seriesOpts);
 		
 		// Convert percent radius to absolute radius.
-		if (seriesOpts.innerRadius && seriesOpts.innerRadius.indexOf('%') >= 0) {
+		if (seriesOpts.innerRadius && typeof seriesOpts.innerRadius === 'string' && seriesOpts.innerRadius.indexOf('%') >= 0) {
 			seriesOpts.innerRadius = min * parseFloat(seriesOpts.innerRadius) / 200;
 		}
 		if (!seriesOpts.outerRadius) {
 			seriesOpts.outerRadius = min / 2;	
-		} else if (seriesOpts.outerRadius && seriesOpts.outerRadius.indexOf('%') >= 0) {
+		} else if (seriesOpts.outerRadius && typeof seriesOpts.outerRadius === 'string' && seriesOpts.outerRadius.indexOf('%') >= 0) {
 			seriesOpts.outerRadius = min * parseFloat(seriesOpts.outerRadius) / 200;
 		}
 		seriesOpts.animation = $.extend({}, context.opts.animation || {}, seriesOpts.animation || {});
@@ -244,6 +242,9 @@ DonutChart.prototype = {
 		.ease(animation.enabled ? (animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
 		.duration(animation.enabled ? (animation.duration || DEFAULT_DURATION) : 0)
 		.call(this.arcTween, context)
+		.each('start', function(){
+			context.transitionCount++;
+		})
 		.each('end', function(d){
 			var t;
 			if (seriesOpts.label && seriesOpts.label.enabled) {
@@ -259,8 +260,21 @@ DonutChart.prototype = {
 		      	.transition()
 		      	.ease(animation.enabled ? (animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
 		      	.duration(animation.enabled ? (animation.duration || DEFAULT_DURATION) : 0)
-		      	.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; });
+		      	.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+		      	.each('start', function(){
+		      		context.transitionCount++;
+		      	})
+		      	.each('end', function(){
+		      		if( --context.transitionCount === 0 && context.opts.on && context.opts.on.end) {
+						context.opts.on.end.call(context._this, context);
+			        }
+		      	});
 			}
+			
+			if( --context.transitionCount === 0 && context.opts.on && context.opts.on.end) {
+				context.opts.on.end.call(context._this, context);
+	        }
+			
 			context.sliceCallback.call(_this, context);
 			
 		})
@@ -277,7 +291,7 @@ DonutChart.prototype = {
 		} else if((context.seriesIndex + 1) < context.opts.series.length) {
 			context.seriesIndex++;
 			context.seriesCallback.call(this, context);
-		}
+		} 
 	},
 	arcTween : function(transition, context) {
 		var arc = context.arc, text = context.text;
@@ -304,39 +318,3 @@ DonutChart.prototype = {
 		return t;
 	}
 }
-
-function toCssStyle(style) {
-    if (typeof style === 'object') {
-        for (var key in style) {
-            if (style.hasOwnProperty(key)) {
-                var newKey = toCssStyle(key);
-                if (newKey !== key) {
-                    style[newKey] = style[key];
-                    style[key] = null;
-                    delete style[key];
-                }
-            }
-        }
-        return style;
-    } else {
-        return style ? style.replace(/([A-Z])/g, function (m, s) {
-            return '-' + s.toLowerCase();
-        }) : style;
-    }
-}
-
-aCharts = {};
-aCharts.format = {};
-aCharts.format.formatInt = formatInt;
-aCharts.format.formatPercent = formatPercent;
-aCharts.TWO_PI = twoPi;
-aCharts.DEFAULT_DURATION = DEFAULT_DURATION;
-aCharts.DEFAULT_EASE = DEFAULT_EASE;
-
-aCharts.util = {};
-aCharts.util.toCssStyle = toCssStyle;
-
-aCharts.Donut = DonutChart;
-window.aCharts = window.aCharts || aCharts;
-
-})();

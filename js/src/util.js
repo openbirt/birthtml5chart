@@ -188,7 +188,7 @@ function extend(a, b) {
  * @returns
  */
 function extendClass(className, self, pClass, protoObj) {
-    function constructor(container, chartContext, options) {
+    function constructor(context, parent, options) {
         // Init this object.
         if (this.fInit) {
             this.fInit.apply(this, arguments);
@@ -201,7 +201,7 @@ function extendClass(className, self, pClass, protoObj) {
     extend(newClass.prototype, protoObj);
     newClass.prototype.__super = pClass ? pClass.prototype : null;
     newClass.prototype.__className = className; 
-    newClass.prototype.__classKey = '.' + className;
+    //newClass.prototype.__classKey = '.' + className;
     return newClass;
 }
 
@@ -217,10 +217,17 @@ function extendClass(className, self, pClass, protoObj) {
  * @param degree
  * @param mode 'auto'/'start'/'end'/'middle'
  */
-function rotateNode(svgNode, degree, mode) {
+function rotateNode(svgNode, _degree, _mode) {
+	var degree = _degree, mode = _mode, enabled = true;
+	if (typeof _degree === 'object' && !mode) {
+		degree = _degree.degree;
+		mode = _degree.mode;
+		enabled = _degree.enabled !== false;
+	}
+	
     var box, cx, cy, tran, tranA, cxy;
 
-    if (degree) {
+    if (enabled && typeof degree === 'number') {
         box = svgNode.getBBox();
         if (mode === 'auto') {
             cxy = '';
@@ -258,11 +265,18 @@ function rotateNode(svgNode, degree, mode) {
  * @param degree
  * @param mode start/middle/end/auto
  */
-function rotate(d3Sel, degree, mode) {
+function rotate(d3Sel, _degree, _mode) {
+	var degree = _degree, mode = _mode, enabled = true;
+	if (typeof _degree === 'object' && !mode) {
+		degree = _degree.degree;
+		mode = _degree.mode;
+		enabled = _degree.enabled !== false;
+	}
+	
     return d3Sel.attr('transform', function (_d) {
         var box, cx, cy, tran = null, tranA, cxy;
 
-        if (degree) {
+        if (enabled  && typeof degree === 'number') {
             box = this.getBBox();
             if (mode === 'auto') {
                 cxy = '';
@@ -344,54 +358,6 @@ function translate(d3Sel, x, y) {
     });
 }
 
-var LINEAR_GRADIENT_SHORT_NAME_PARTS = {
-        'L' : ['0%', '50%'],
-        'R' : ['100%', '50%'],
-        'T' : ['50%', '0%'],
-        'B' : ['50%', '100%'],
-        'LT' : ['0%', '0%'],
-        'TL' : ['0%', '0%'],
-        'LB' : ['0%', '100%'],
-        'BL' : ['0%', '100%'],
-        'RT' : ['100%', '0%'],
-        'TR' : ['100%', '0%'],
-        'RB' : ['100%', '100%'],
-        'BR' : ['100%', '100%']
-    };
-
-/**
- * Convert gradient color options to svg gradient color paramters.
- * 
- * @param gradientOpts
- * @returns
- */
-function adaptColorGradient(gradientOpts) {
-    var params = gradientOpts.parameters,
-        parts = null;
-    if (gradientOpts.type === 'linearGradient') {
-        params = params || ['0%',  '0%', '100%', '100%'];
-        if (typeof params === 'string') {
-            /**
-             * It uses short name. The short name include L,T,R,B and mean Left
-             * side, Top side, Right side and Bottom Side.
-             * <p>
-             * The form should be like 'L,R' or 'T,B' or 'LT,RB' and so on
-             * separated with comma, the first part means start and the second
-             * part means end. The short name will be convert to percent value form.
-             */
-            parts = params.split(',');
-            params = [];
-            params[0] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[0]][0];
-            params[1] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[0]][1];
-            params[2] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[1]][0];
-            params[3] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[1]][1];
-        }
-        return {x1 : params[0], y1 : params[1], x2 : params[2], y2 : params[3]};
-    } else if (gradientOpts.type === 'radialGradient') {
-        return {cx : params[0], cy : params[1], r : params[2], fx : params[3], fy : params[4]};
-    }
-}
-
 /**
  * {@link http://www.websiteoptimization.com/secrets/css/font-shorthand.html}
  * <br>The syntax of the font: shorthand property is as follows:
@@ -451,8 +417,21 @@ function toArray(object) {
 	return [object];
 }
 
+/**
+ * Get class key of specified class to be used for css class seelction. 
+ * 
+ * @param clazzName
+ * @returns {String}
+ */
+function toClassKey(clazzName) {
+	return '.' + clazzName;
+}
+
 function toCssStyle(style) {
-    if (typeof style === 'object') {
+	if (typeof style === 'function') {
+		return style;
+	}
+	else if (typeof style === 'object') {
         for (var key in style) {
             if (style.hasOwnProperty(key)) {
                 var newKey = toCssStyle(key);
@@ -467,6 +446,250 @@ function toCssStyle(style) {
     } else {
         return style ? style.replace(/([A-Z])/g, function (m, s) {
             return '-' + s.toLowerCase();
-        }) : style;
+        }) : {};
     }
+}
+
+function setBounds(d3Sel, opts) {
+	if (opts.x) {
+		d3Sel.attr('x', opts.x);
+	}
+	if (opts.y) {
+		d3Sel.attr('y', opts.y);
+	}
+	if (opts.dx) {
+		d3Sel.attr('dx', opts.dx);
+	}
+	if (opts.dy) {
+		d3Sel.attr('dy', opts.dy);
+	}
+	if (opts.width) {
+		d3Sel.attr(opts.width);
+	}
+	if (opts.heigth) {
+		d3Sel.attr(opts.height);
+	}
+}
+
+function adaptCssStyle(property, styleOpts) {
+	var type = typeof styleOpts, s;
+	if (type === 'string' || type === 'function') {
+		s = {};
+		s[property] = styleOpts;
+		return s;
+	} else if (type === 'object' ){
+		return toCssStyle(styleOpts);
+	} else {
+		return {};
+	}
+}
+
+function adaptBorderStyle(borderStyleOpts, context) {
+	if (typeof borderStyle === 'object') {
+        // Adjust property value
+        for (var k in borderStyleOpts) {
+            if (borderStyleOpts.hasOwnProperty(k)) {
+                if (k === 'roundCorner') {
+                    borderStyleOpts.rx = borderStyleOpts.rx || borderStyleOpts.roundCorner;
+                    borderStyleOpts.ry = borderStyleOpts.ry || borderStyleOpts.roundCorner;
+                } else if (k === 'dashStyle') {
+                    borderStyleOpts[k] = adaptDashstyle.call(this, k, borderStyleOpts[k], d3c_getBorderWidth(borderStyleOpts), context).value;
+                } else if (k === 'stroke' || k === 'fill') {
+                    borderStyleOpts[k] = adaptFill.call(this, borderStyleOpts[k], context).value;
+                } 
+            }
+        }
+	}
+	return adaptCssStyle.call(this, 'border', borderStyleOpts);
+}
+
+/**
+ * Convert color option to HTML/CSS style.
+ * 
+ * @param fillValue
+ * @param context
+ * @returns fill value object
+ */
+function adaptFill(fillValue, context) {
+    var bbox = null,
+    img = null,
+    id = null,
+    lg = null,
+    i = 0;
+    if (typeof fillValue === 'function') {
+        return (function (_this) {
+            var args = context ? d3.merge(arguments, [context])
+                : arguments;
+            return {
+                'value' : fillValue.apply(_this, args)
+            };
+        })(this);
+    } else if (typeof fillValue === 'object') {
+        if (fillValue.type === 'image') {
+            bbox = this.getBBox();
+            img = this.d3Sel.append('image').datum(fillValue);
+            img.attr({'x': 0, 'y': 0, 'width': bbox.width, 'height': bbox.height,
+            'xlink:href': fillValue.parameters && fillValue.parameters[0]});
+            return {
+                value : (fillValue.indexOf('url') >= 0) ? fillValue : ('#url(' + fillValue + ')'),
+                imageNode : img
+            };
+        } else if (fillValue.type === 'linearGradient' || fillValue.type === 'radialGradient') {
+            var defs = context.fDefs();
+            id = uniqueId(fillValue.type);
+            lg = defs.append(fillValue.type).attr('id', id).attr(adaptColorGradient(fillValue));
+            for (i = 0; i < fillValue.stops.length; i++) {
+                lg.append('stop')
+                .attr(toCssStyle({offset: fillValue.stops[i].offset || '0%', stopColor: (fillValue.stops[i].stopColor || (this.options && this.options.fill) || 'white'), stopOpacity: fillValue.stops[i].stopOpacity || 1}));
+            }
+            return {
+                value : 'url(#' + id + ')',
+                gradientNode : lg
+            };
+        }
+    } else {
+        return {
+            value : fillValue
+        };
+    }
+}
+
+/**
+ * Return an unique id.
+ * 
+ * @returns {String}
+ */
+function uniqueId(_param) {
+    return GLOBAL.prefix + '-' + (_param ? (_param + '-') : '') + (internalCount++) + '-' + Math.random().toString(2).slice(2);
+}
+
+var LINEAR_GRADIENT_SHORT_NAME_PARTS = {
+        'L' : ['0%', '50%'],
+        'R' : ['100%', '50%'],
+        'T' : ['50%', '0%'],
+        'B' : ['50%', '100%'],
+        'LT' : ['0%', '0%'],
+        'TL' : ['0%', '0%'],
+        'LB' : ['0%', '100%'],
+        'BL' : ['0%', '100%'],
+        'RT' : ['100%', '0%'],
+        'TR' : ['100%', '0%'],
+        'RB' : ['100%', '100%'],
+        'BR' : ['100%', '100%']
+    };
+
+/**
+ * Convert gradient color options to svg gradient color paramters.
+ * 
+ * @param gradientOpts
+ * @returns
+ */
+function adaptColorGradient(gradientOpts) {
+    var params = gradientOpts.parameters,
+        parts = null;
+    if (gradientOpts.type === 'linearGradient') {
+        params = params || ['0%',  '0%', '100%', '100%'];
+        if (typeof params === 'string') {
+            /**
+             * It uses short name. The short name include L,T,R,B and mean Left
+             * side, Top side, Right side and Bottom Side.
+             * <p>
+             * The form should be like 'L,R' or 'T,B' or 'LT,RB' and so on
+             * separated with comma, the first part means start and the second
+             * part means end. The short name will be convert to percent value form.
+             */
+            parts = params.split(',');
+            params = [];
+            params[0] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[0]][0];
+            params[1] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[0]][1];
+            params[2] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[1]][0];
+            params[3] = LINEAR_GRADIENT_SHORT_NAME_PARTS[parts[1]][1];
+        }
+        return {x1 : params[0], y1 : params[1], x2 : params[2], y2 : params[3]};
+    } else if (gradientOpts.type === 'radialGradient') {
+        return {cx : params[0], cy : params[1], r : params[2], fx : params[3], fy : params[4]};
+    }
+}
+
+/**
+ * Convert dash-style option to HTML/CSS style.
+ * 
+ * @param name
+ * @param value
+ * @param width
+ *            dash width
+ * @param context
+ * @returns
+ */
+function adaptDashstyle(name, v, width, context) {
+    var i, value = v;
+    if (typeof value === 'function') {
+        return (function (_this) {
+            var args = context ? d3.merge(arguments, [context])
+                    : arguments;
+            return {
+                'name' : name,
+                'value' : value.apply(_this, args)
+            };
+        })(this);
+    } else {
+        value = value && value.toLowerCase();
+        if (value === 'solid') {
+            value = 'none';
+        } else if (value) {
+            value = value.replace(/(shortdashdotdot)/g, '3,1,1,1,1,1,').replace(
+                    /(shortdashdot)/g, '3,1,1,1').replace(/(shortdot)/g, '1,1,')
+                    .replace(/(shortdash)/g, '3,1,').replace(/(longdash)/g, '8,3,')
+                    .replace(/(dot)/g, '1,3,').replace(/(dash)/g, '4,3,').replace(
+                            /,$/, '').split(','); // ending comma
+
+            i = value.length;
+            while (i--) {
+                value[i] = parseInt(value[i]) * width;
+            }
+            value = value.join(',');
+        }
+
+        return {
+            'name' : name,
+            'value' : value
+        };
+    }
+}
+
+function adaptFontStyle(fontStyleOpts, context) {
+	if (typeof fontStyleOpts === 'object') {
+        
+        // Adjust property value.
+        for (var k in fontStyleOpts) {
+            if (fontStyleOpts.hasOwnProperty(k)) {
+                if (k === 'stroke' || k === 'fill') {
+                    fontStyleOpts[k] = adaptFill.call(this, fontStyleOpts[k], context).value;
+                    fontStyleOpts[k + 'Opacity'] = (fontStyleOpts[k + 'Opacity'] === undefined) ? 1 : fontStyleOpts[k + 'Opacity']; 
+                } 
+            }
+        }
+    }
+
+	return adaptCssStyle.call(this, 'font', fontStyleOpts);
+}
+
+function adaptFillStyle(color) {
+	return adaptCssStyle.call(this, 'fill', color);
+}
+
+function adaptBackgroundStyle(background) {
+	return adaptCssStyle.call(this, 'fill', background);
+}
+
+function format(data, formatFact) {
+	var type = typeof formatFact;
+	if (!formatFact) {
+		return data;
+	}
+	if (type === 'function') {
+		return formatFact.call(this, data);
+	} else if (type === 'string') { // It's pattern
+		return d3.format(formatFact).call(this, data);
+	}
 }

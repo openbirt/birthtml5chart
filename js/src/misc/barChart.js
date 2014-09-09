@@ -2,8 +2,7 @@
  * A bar chart based on d3js
  * @author: Heng Li(Henry)
  */
-(function(){
-	var options = {
+	var barChartDefaultOptions = {
 			mode: 'horizontal', // vertial or horizontal ,default is horizontal
 			width:600,
 			height:400,
@@ -130,6 +129,9 @@
 			categories:{
 				type:null,
 				data:['a', 'b', 'c', 'd']
+			},
+			on: {
+				end: null
 			}
 	};
 
@@ -142,7 +144,7 @@
 		init:function(_opts) {
 			this.opts = _opts;
 		},
-		render:function(_container) {
+		render:function(container) {
 			var i, j, opts = this.opts, context= {}, barChart, chartArea, remainedBox = {};
 			
 			context.barChart = this;
@@ -270,6 +272,7 @@
 			.attr('transform', 'translate(' + remainedBox.x + ',' + remainedBox.y + ')');
 			
 			// Render series
+			context.transitionCount = 0;
 			context.x = x;
 			context.y = y;
 			context.xAxis = xAxis;
@@ -328,6 +331,7 @@
 			.attr("y", context.isVertical ? function(d) { return y(d.value); } : function(d) {return x(d.category) + (xRangeBand - xDelta) / 2;})
 			.attr("width", context.isVertical ? adaptSize((series.width || xRangeBand), xRangeBand) : function(d) { return y(d.value); })
 			.attr("height", context.isVertical ? function(d) { return remainedBox.h - y(d.value); } : xDelta)
+			.each('start', function() {context.transitionCount++;})
 			.each('end', function(d, i){
 				if ((i + 1) <= series.data.length 
 						&& context.opts.animation.enabled !== false 
@@ -338,7 +342,15 @@
 						context.renderSeriesCallback.call(context._this, context.opts.series[context.seriesIndex], context);
 					}
 				}
+				
+				if( --context.transitionCount === 0 && context.opts.on && context.opts.on.end) {
+					context.opts.on.end.call(context._this, context);
+		        }
 			});
+			
+			if (series.label.enabled === false) {
+				return;
+			}
 			
 			labelBlock = barsBlock.append('text')
 			.attr('class', 'label')
@@ -346,7 +358,6 @@
 				return d.label.format !== false ? (d.label.format ? d.label.format.call(this, d, context) : d.value): '';})
 			.each(function(d){
 				var label = d3.select(this);
-				
 				label.style(toCssStyle(d.label.fillStyle))
 				.style(toCssStyle(d.label.fontStyle))
 				.attr('text-anchor', d.label.align)
@@ -357,7 +368,16 @@
 				.ease((d.label.animation.enabled!== false) ? (d.label.animation.ease || DEFAULT_EASE) : DEFAULT_EASE)
 				.attr("x", context.isVertical ? x(d.category)  + xRangeBand / 2: y(d.value))
 				.attr("y", context.isVertical ? y(d.value): x(d.category) + xRangeBand /2)
-				.attr('dy', context.isVertical ? '0em' : '.5em');
+				.attr('dy', context.isVertical ? '0em' : '.5em')
+				.each('start', function(){
+					context.transitionCount++;
+				})
+				.each('end', function(){
+					
+					if( --context.transitionCount === 0 && context.opts.on && context.opts.on.end) {
+						context.opts.on.end.call(context._this, context);
+			        }
+				});
 			});
 			
 		},
@@ -398,40 +418,4 @@
 			context.seriesValueExtent = extent;
 		}
 	}
-	
-	function toCssStyle(style) {
-	    if (typeof style === 'object') {
-	        for (var key in style) {
-	            if (style.hasOwnProperty(key)) {
-	                var newKey = toCssStyle(key);
-	                if (newKey !== key) {
-	                    style[newKey] = style[key];
-	                    style[key] = null;
-	                    delete style[key];
-	                }
-	            }
-	        }
-	        return style;
-	    } else {
-	        return style ? style.replace(/([A-Z])/g, function (m, s) {
-	            return '-' + s.toLowerCase();
-	        }) : style;
-	    }
-	}
-	
-	function adaptSize(sizeOpt, refSize) {
-		var type  = typeof sizeOpt;
-		if (type === 'string' && sizeOpt.indexOf('%') >= 0) {
-			return parseInt(sizeOpt) * refSize / 100;
-		}
-		return sizeOpt;
-	}
-	
-	aCharts = window.aCharts || {};
-	aCharts.Bar = Bar;
-	window.aCharts = window.aCharts || aCharts;
-	
-	var toCssStyle = aCharts.util.toCssStyle;
-	var DEFAULT_DURATION = aCharts.DEFAULT_DURATION;
-	var DEFAULT_EASE = aCharts.DEFAULT_EASE;
-})()
+

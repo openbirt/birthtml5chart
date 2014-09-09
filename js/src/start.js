@@ -1,5 +1,5 @@
 /**
  * New node file
  */
-(function(chart){
+(function(){
 	

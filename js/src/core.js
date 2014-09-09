@@ -8,6 +8,9 @@
  * 6. Every element includes prototype functions fInit, fOptins, fRender, fRedraw, fApplyChange, fBBox, fDestory; and prototype properties __class_name, __super, options, context.    
  */
 
+// The field is used to count internally.
+var internalCount = 0;
+
 var Global = {
     lazyRender: true,
     prefix: 'd3charts'
@@ -25,7 +28,6 @@ var Legend = function(){};
 var LegendItem = function(){};
 var Title = function(){};
 
-var ChartContext = function() {};
 var Chart = function() {};
 var Tooltip = function(){};
 
@@ -36,6 +38,9 @@ var Context = extendClass('Context', null, Object, {
 	fInit: function() {
 		this.prefix = Global.prefix;
 		this.lazyRender = Global.lazyRender;
+	},
+	fDefs: function() {
+		// Return SVG definitions.
 	}
 });
 
@@ -57,7 +62,7 @@ var RendererCallback = extendClass('RenderCallback', null, null, {
  */
 var Element = extendClass('Element', null, RendererCallback,  {
     __className: null,
-    __classKey: null,
+    //__classKey: null,
 	__super: null,
     context: null,
     parent: null,
