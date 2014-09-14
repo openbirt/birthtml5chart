@@ -8,6 +8,7 @@
  * 6. Every element includes prototype functions fInit, fOptins, fRender, fRedraw, fApplyChange, fBBox, fDestory; and prototype properties __class_name, __super, options, context.    
  */
 
+
 // The field is used to count internally.
 var internalCount = 0;
 
@@ -35,13 +36,28 @@ var Tooltip = function(){};
 var Context = extendClass('Context', null, Object, {
 	prefix: null,
 	lazyRender: null,
-	fInit: function() {
+	svgNode: null,
+	fInit: function(svgNode) {
 		this.prefix = Global.prefix;
 		this.lazyRender = Global.lazyRender;
+		this.svgNode = svgNode;
 	},
-	fDefs: function() {
-		// Return SVG definitions.
-	}
+	fSvgNode: function() {
+		if (!arguments.length) {
+			return this.svgNode;
+		} else {
+			this.svgNode = arugments[0];
+			return this;
+		}
+	},
+    fDefs: function () {
+        if (!arguments.length) {
+            return this.defs ? this.defs : (this.defs = d3.select(this.svgNode).append('defs'));
+        } else {
+            this.defs = arguments[0];
+            return this;
+        }
+    }
 });
 
 
@@ -126,6 +142,9 @@ var Element = extendClass('Element', null, RendererCallback,  {
         }
         
         return this;
+    },
+    fClassNames: function() {
+    	return this.options.id ? this.options.id + ' ' + this.__className : this.__className;
     },
     fBBox: function () {
     	 return this.d3Sel ? copy(this.d3Sel.bbox()): {};

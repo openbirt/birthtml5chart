@@ -10,21 +10,24 @@
 <script>
 (function(){
 	var svg = d3.select('#chart');
+	//svg.append('rect').style('fill', 'yellow').style('stroke', 'black').attr('x', 0).attr('y', 30).attr('width',200).attr('height', 30);
+	
 	var g = svg.append('g').attr('class', 'group');
 	svg.attr({'x': 0, 'y': 0, 'width': 800, 'height':600});
 	
 	var opts = {
-			data:['This is a text.', 'That is a text'],  
-			x: 100,
+			id: '_1',
+			data:['Hello World!'],  
+			x: 50,
 			y: function(d, i){
-				return i * 100;
+				return i * 100+30;
 			},
-			dy: '1em',
-			textAnchor:'middle',
+			//dy: '.2em',
+			align:'', // 'left', 'center', 'right', 'auto' == 'left'
+			verticalAlign:'top', // 'top', 'center', 'bottom', 'auto' == 'top'
 			format:null, // This is a format pattern or a function
 			font:{
-				fontSize:'30',
-				
+				fontSize:'30px',
 			}, 
 			border:{
 				stroke:'red',
@@ -36,14 +39,30 @@
 				fillOpacity:1
 			}, 
 			rotate:{
-				degree:45,
+				degree:0,
 				mode:'start'
 			}
 		};
 	
-	var context = new birtchart.Context();
+	
+	var context = new birtchart.Context(svg.node());
 	var text = new birtchart.Text(context, null, opts);
 	text.fRender(g);
+	
+	opts.id = '_2';
+	opts.y = 100;
+	opts.rotate.degree = 45;
+	text = new birtchart.Text(context, null, opts);
+	text.fRender(g);
+	
+	opts.id = '_3';
+	opts.data = ['Hello!\nWelcome to Shanghai!'];
+	opts.x = 250;
+	opts.y = 30;
+	opts.rotate.degree = 30;
+	text = new birtchart.Text(context, null, opts);
+	text.fRender(g);
+	
 })()
 </script>
 </body>

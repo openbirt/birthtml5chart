@@ -35,7 +35,16 @@ d3.transition.prototype.bbox = d3.selection.prototype.bbox;
 
 d3.selection.prototype.opts = function() {
 	return arguments.length ? this.property("__opts__", value) : this.property("__opts__");
-};;/** Check if specified value is number.
+};;
+var DPI;
+var FONT_BASELINE_SCALE = 0.8;
+var PATTERN_ROTATE = /rotate\(.*?\)/g;
+var PATTERN_TRANSLATE = /translate\(.*?\)/g;
+var PATTERN_SCALE = /scale\(.*?\)/g;
+var PATTERN_SKEW = /skew[XY]{1}\(.*?\)/g;
+var PATTERN_MATRIX = /matrix\(.*?\)/g;
+
+/** Check if specified value is number.
  * 
  * @param v
  * @returns {Boolean}
@@ -75,6 +84,25 @@ function isObject(v) {
 }
 
 /**
+ * Check if object is empty.
+ * 
+ * @param map
+ * @returns {Boolean}
+ */
+function emptyObject(map) {
+	if(!map) {
+		return true;
+	}
+	
+	for(var key in map) {
+	      if (map.hasOwnProperty(key)) {
+	         return false;
+	      }
+	   }
+	   return true;
+}
+
+/**
  * Convert degree to radian.
  * 
  * @param deg
@@ -92,6 +120,80 @@ function toRadian(deg) {
  */
 function toDegree(radian) {
 	return radian * 180 / Math.PI; 
+}
+
+function getDPI() {
+	var d = document.createElement('div');
+	d.setAttribute('id', 'testdiv');
+	d.style.height = '1in';
+	d.style.left = '-100%';
+	d.style.position = 'absolute';
+	d.style.top = '-100%';
+	d.style.width = '1in';
+	var body = document.getElementsByTagName('body')[0];
+	body.appendChild(d);
+	var dpi = document.getElementById('testdiv').offsetWidth;
+	body.removeChild(d);
+	return dpi;
+}
+
+function adaptSize(value, targetUnit, returnNum) {
+	if (!targetUnit) {
+		return value;
+	}
+	var dpi = DPI ? DPI : (DPI = getDPI(), DPI),
+	v = parseFloat(value),
+	tmp = v,
+	unit = value.indexOf('pt') > 0 ? 'pt' : value.indexOf('in') > 0 ? 'in' : value.indexOf('mm') > 0 ? 'mm' : value.indexOf('cm') > 0 ? 'cm' : 'px',
+	returnUnit = null;
+	// Calculate tmp based on px;
+	if (unit === 'pt') {
+		tmp = dpi * v / 72;
+	} else if (unit === 'in') {
+		tmp = v * dpi;
+	} else if (unit === 'mm') {
+		tmp = dpi * v / 25.4;
+	} else if (unit === 'cm') {
+		tmp = dpi * v / 2.54;
+	}
+
+	if (targetUnit === 'pt') {
+		tmp = tmp * 72 / dpi;
+		returnUnit = 'pt';
+	} else if (targetUnit === 'in') {
+		tmp = tmp / dpi;
+		returnUnit = 'in';
+	} else if (targetUnit === 'mm') {
+		tmp = tmp * 25.4 / dpi;
+		returnUnit = 'mm';
+	} else if (targetUnit === 'cm') {
+		tmp = tmp * 2.54 / dpi;
+		returnUnit = 'cm';
+	} else if (targetUnit === 'px') {
+		tmp = tmp;
+		returnUnit = 'px';
+	}
+	return returnNum=== true ? tmp : tmp + returnUnit;
+}
+
+function toPixel(v, returnNum) {
+	return adaptSize(v, 'px', returnNum);
+}
+
+function toPoint(v, returnNum) {
+	return adaptSize(v, 'pt', returnNum);
+}
+
+function toInch(v, returnNum) {
+	return adaptSize(v, 'in', returnNum);
+}
+
+function toMm(v, returnNum) {
+	return adaptSize(v, 'mm', returnNum);
+}
+
+function toCm(v, returnNum) {
+	return adaptSize(v, 'cm', returnNum);
 }
 
 /**
@@ -262,7 +364,7 @@ function rotateNode(svgNode, _degree, _mode) {
 		enabled = _degree.enabled !== false;
 	}
 	
-    var box, cx, cy, tran, tranA, cxy;
+    var box, cx, cy, tran, cxy, rotateExpr;
 
     if (enabled && typeof degree === 'number') {
         box = svgNode.getBBox();
@@ -274,21 +376,17 @@ function rotateNode(svgNode, _degree, _mode) {
             cy = box.y + box.height / 2;  
             cxy = ' ' + cx + ' ' + cy;
         }
+
+        rotateExpr = 'rotate(' + degree + cxy + ')';
         tran = svgNode.getAttribute('transform');
         if (tran) {
-            tranA = tran.split(/\)/g);
-            if (tranA.length) {
-                tran = '';
-                for (var i in tranA) {
-                    if (tranA.hasOwnProperty(i)) {
-                        tran += ' ' + (tranA[i].indexOf('rotate') >= 0) ? 'rotate(' +
-                                degree + cxy + ')'
-                                : tranA[i].trim() + ')';
-                    }
-                }
-            }
+        	if (tran.match(PATTERN_ROTATE)) {
+        		tran = tran.replace(PATTERN_ROTATE, rotateExpr);
+        	} else {
+        		tran += ' ' + rotateExpr;
+        	}
         } else {
-            tran = 'rotate(' + degree + cxy + ')';
+            tran = rotateExpr;
         }
         svgNode.setAttribute('transform', tran);
     }
@@ -311,7 +409,7 @@ function rotate(d3Sel, _degree, _mode) {
 	}
 	
     return d3Sel.attr('transform', function (_d) {
-        var box, cx, cy, tran = null, tranA, cxy;
+        var box, cx, cy, tran = null, cxy, rotateExpr;
 
         if (enabled  && typeof degree === 'number') {
             box = this.getBBox();
@@ -324,21 +422,16 @@ function rotate(d3Sel, _degree, _mode) {
                 cxy = ' ' + cx + ',' + cy;
             }
             
+            rotateExpr = 'rotate(' + degree + cxy + ')';
             tran = this.getAttribute('transform');
             if (tran) {
-                tranA = tran.split(/\)/g);
-                if (tranA.length) {
-                    tran = '';
-                    for (var i in tranA) {
-                        if (tranA.hasOwnProperty(i)) {
-                            tran += ' ' + (tranA[i].indexOf('rotate') >= 0) ? 'rotate(' +
-                                    degree + cxy + ')'
-                                    : tranA[i].trim() + ')';
-                        }
-                    }
-                }
+            	if (tran.match(PATTERN_ROTATE)) {
+            		tran = tran.replace(PATTERN_ROTATE, rotateExpr);
+            	} else {
+            		tran += ' ' + rotateExpr;
+            	}
             } else {
-                tran = 'rotate(' + degree + cxy + ')';
+                tran = rotateExpr;
             }
         }
         return tran;
@@ -352,18 +445,20 @@ function rotate(d3Sel, _degree, _mode) {
  * @param x
  * @param y
  */
-function translate(d3Sel, x, y) {
+function translate(d3Sel, x, y, context) {
     if (arguments.length === 1) {
         // Return x and y of current translate.
         var transXY = [];
         d3Sel.each(function(){
-            var tran = this.getAttribute('transform');
+            var tran = this.getAttribute('transform'), x, y;
             if (tran && tran.indexOf('translate') >= 0) {
-                tran = tran.match(/translate\([0-9\s\.\-,]+\)/);
+                tran = tran.match(PATTERN_TRANSLATE);
                 if (tran && tran.length) {
                     tran = tran[0].match(/([0-9\.\-]+)/g);
-                    if (tran && tran.length && tran.length > 1) {
-                        transXY.push({'x':tran[0], 'y': tran[1]});
+                    if (tran && tran.length) {
+                    	x = parseFloat(tran[0]);
+                    	y = tran[1] ? parseFloat(tran[1]) : 0;
+                        transXY.push({'x': x, 'y': y});
                     }
                 }
             }
@@ -371,25 +466,22 @@ function translate(d3Sel, x, y) {
         return transXY;
     }
     
-    function f (x, d) {
-        return typeof x === 'function' ? x(d) : x; 
+    function f (x, d, i) {
+        return typeof x === 'function' ? x(d, i, context) : x; 
     }
-    return d3Sel.attr('transform', function (d) {
-        var tran = this.getAttribute('transform');
-        if (tran && tran.indexOf('translate') >= 0) {
-            tranA = tran.split(/\)/g);
-            if (tranA.length) {
-                tran = '';
-                for (var i in tranA) {
-                    if (tranA.hasOwnProperty(i) && tranA[i].trim() !== '') {
-                        tran += ' ' + (tranA[i].indexOf('translate') >= 0) ? 'translate(' +
-                                f(x, d) + ',' + f(y, d) + ')'
-                                : tranA[i].trim() + ')';
-                    }
-                }
-            }
+    
+    return d3Sel.attr('transform', function (d, i) {
+    	var translateEpr = 'translate(' + f(x, d, i) + ',' + f(y, d, i) + ')',
+        tran = this.getAttribute('transform');
+        if (tran) {
+        	if (tran.match(PATTERN_TRANSLATE)) {
+        		tran = tran.replace(PATTERN_TRANSLATE, translateEpr);
+        	} else {
+        		tran += ' ' + translateEpr;
+        	}
+
         } else {
-            tran = 'translate(' + f(x, d) + ',' + f(y, d) + ') ' + (tran || '');
+            tran = translateEpr;
         }
         return tran;
     });
@@ -457,11 +549,11 @@ function toArray(object) {
 /**
  * Get class key of specified class to be used for css class seelction. 
  * 
- * @param clazzName
+ * @param clazzNames
  * @returns {String}
  */
-function toClassKey(clazzName) {
-	return '.' + clazzName;
+function toClassKey(clazzNames) {
+	return '.' + clazzNames.replace(' ', '.');
 }
 
 function toCssStyle(style) {
@@ -501,10 +593,10 @@ function setBounds(d3Sel, opts) {
 		d3Sel.attr('dy', opts.dy);
 	}
 	if (opts.width) {
-		d3Sel.attr(opts.width);
+		d3Sel.attr('width', opts.width);
 	}
 	if (opts.heigth) {
-		d3Sel.attr(opts.height);
+		d3Sel.attr('height', opts.height);
 	}
 }
 
@@ -521,8 +613,25 @@ function adaptCssStyle(property, styleOpts) {
 	}
 }
 
+/**
+* Return combined border stroke width.
+* 
+* @param borderStyle
+* @returns {Number}
+*/
+function getBorderStrokeWidth(borderStyle) {
+    return borderStyle ? (borderStyle.strokeWidth || borderStyle['stroke-width'] || borderStyle.width || 0) : 0;
+}
+
+/**
+ * Convert properties of border style object to fit attribute name standard of HTML/SVG/CSS.
+ * 
+ * @param _borderStyle
+ * @param _chartContext
+ * @returns {Object}
+ */
 function adaptBorderStyle(borderStyleOpts, context) {
-	if (typeof borderStyle === 'object') {
+	if (typeof borderStyleOpts === 'object') {
         // Adjust property value
         for (var k in borderStyleOpts) {
             if (borderStyleOpts.hasOwnProperty(k)) {
@@ -530,9 +639,9 @@ function adaptBorderStyle(borderStyleOpts, context) {
                     borderStyleOpts.rx = borderStyleOpts.rx || borderStyleOpts.roundCorner;
                     borderStyleOpts.ry = borderStyleOpts.ry || borderStyleOpts.roundCorner;
                 } else if (k === 'dashStyle') {
-                    borderStyleOpts[k] = adaptDashstyle.call(this, k, borderStyleOpts[k], d3c_getBorderWidth(borderStyleOpts), context).value;
+                    borderStyleOpts[k] = adaptDashstyle.call(this, k, borderStyleOpts[k], getBorderStrokeWidth(borderStyleOpts), context);
                 } else if (k === 'stroke' || k === 'fill') {
-                    borderStyleOpts[k] = adaptFill.call(this, borderStyleOpts[k], context).value;
+                    borderStyleOpts[k] = adaptFill.call(this, borderStyleOpts[k], context);
                 } 
             }
         }
@@ -554,23 +663,18 @@ function adaptFill(fillValue, context) {
     lg = null,
     i = 0;
     if (typeof fillValue === 'function') {
-        return (function (_this) {
+        return function (_this) {
             var args = context ? d3.merge(arguments, [context])
                 : arguments;
-            return {
-                'value' : fillValue.apply(_this, args)
-            };
-        })(this);
+            return fillValue.apply(_this, args);
+        };
     } else if (typeof fillValue === 'object') {
         if (fillValue.type === 'image') {
             bbox = this.getBBox();
             img = this.d3Sel.append('image').datum(fillValue);
             img.attr({'x': 0, 'y': 0, 'width': bbox.width, 'height': bbox.height,
             'xlink:href': fillValue.parameters && fillValue.parameters[0]});
-            return {
-                value : (fillValue.indexOf('url') >= 0) ? fillValue : ('#url(' + fillValue + ')'),
-                imageNode : img
-            };
+            return (fillValue.indexOf('url') >= 0) ? fillValue : ('#url(' + fillValue + ')');
         } else if (fillValue.type === 'linearGradient' || fillValue.type === 'radialGradient') {
             var defs = context.fDefs();
             id = uniqueId(fillValue.type);
@@ -579,15 +683,10 @@ function adaptFill(fillValue, context) {
                 lg.append('stop')
                 .attr(toCssStyle({offset: fillValue.stops[i].offset || '0%', stopColor: (fillValue.stops[i].stopColor || (this.options && this.options.fill) || 'white'), stopOpacity: fillValue.stops[i].stopOpacity || 1}));
             }
-            return {
-                value : 'url(#' + id + ')',
-                gradientNode : lg
-            };
+            return 'url(#' + id + ')';
         }
     } else {
-        return {
-            value : fillValue
-        };
+        return fillValue;
     }
 }
 
@@ -658,17 +757,14 @@ function adaptColorGradient(gradientOpts) {
  * @param context
  * @returns
  */
-function adaptDashstyle(name, v, width, context) {
+function adaptDashstyle(v, width, context) {
     var i, value = v;
     if (typeof value === 'function') {
-        return (function (_this) {
+        return function () {
             var args = context ? d3.merge(arguments, [context])
                     : arguments;
-            return {
-                'name' : name,
-                'value' : value.apply(_this, args)
-            };
-        })(this);
+            return value.apply(this, args);
+        };
     } else {
         value = value && value.toLowerCase();
         if (value === 'solid') {
@@ -687,10 +783,7 @@ function adaptDashstyle(name, v, width, context) {
             value = value.join(',');
         }
 
-        return {
-            'name' : name,
-            'value' : value
-        };
+        return value;
     }
 }
 
@@ -701,7 +794,7 @@ function adaptFontStyle(fontStyleOpts, context) {
         for (var k in fontStyleOpts) {
             if (fontStyleOpts.hasOwnProperty(k)) {
                 if (k === 'stroke' || k === 'fill') {
-                    fontStyleOpts[k] = adaptFill.call(this, fontStyleOpts[k], context).value;
+                    fontStyleOpts[k] = adaptFill.call(this, fontStyleOpts[k], context);
                     fontStyleOpts[k + 'Opacity'] = (fontStyleOpts[k + 'Opacity'] === undefined) ? 1 : fontStyleOpts[k + 'Opacity']; 
                 } 
             }
@@ -719,6 +812,71 @@ function adaptBackgroundStyle(background) {
 	return adaptCssStyle.call(this, 'fill', background);
 }
 
+/**
+ * Convert margin option to standard format, the returned margin option contains
+ * top&right&bottom&left.
+ * 
+ * @param margin
+ * @returns
+ */
+function adaptMargin(margin) {
+    if (typeof margin === 'string') {
+        var values = margin.split(/ /g);
+        switch (values.length) {
+        case 1:
+            return {
+                top : toPixel(values[0], true),
+                right : toPixel(values[0], true),
+                bottom : toPixel(values[0], true),
+                left : toPixel(values[0], true)
+            };
+        case 2:
+            return {
+                top : toPixel(values[0], true),
+                right : toPixel(values[1], true),
+                bottom : toPixel(values[0], true),
+                left : toPixel(values[1], true)
+            };
+        case 3:
+            return {
+                top : toPixel(values[0], true),
+                right : toPixel(values[1], true),
+                bottom : toPixel(values[2], true),
+                left : toPixel(values[1], true)
+            };
+        case 4:
+            return {
+                top : toPixel(values[0], true),
+                right : toPixel(values[1], true),
+                bottom : toPixel(values[2], true),
+                left : toPixel(values[3], true)
+            };
+        }
+        return {
+            top : 0,
+            right : 0,
+            bottom : 0,
+            left : 0
+        };
+    } else {
+        var m = merge({
+            top : 0,
+            right : 0,
+            bottom : 0,
+            left : 0
+        }, margin);
+        return m;
+    }
+}
+
+function adaptPadding(padding) {
+	return adaptMargin(padding);
+}
+
+function newBBoxObj() {
+	return {'x': 0, 'y': 0, 'width': 0, 'height': 0};
+}
+
 function format(data, formatFact) {
 	var type = typeof formatFact;
 	if (!formatFact) {
@@ -729,7 +887,9 @@ function format(data, formatFact) {
 	} else if (type === 'string') { // It's pattern
 		return d3.format(formatFact).call(this, data);
 	}
-};/**
+}
+
+;/**
  * Specification:
  * 1. Use css properties as default options.
  * 2. Variable starting with '_' means private object. e.g. _width indicates width of object, as default, other class should not access this variable.
@@ -738,6 +898,7 @@ function format(data, formatFact) {
  * 5. Constants are defined in prototype object and use UPPER case.
  * 6. Every element includes prototype functions fInit, fOptins, fRender, fRedraw, fApplyChange, fBBox, fDestory; and prototype properties __class_name, __super, options, context.    
  */
+
 
 // The field is used to count internally.
 var internalCount = 0;
@@ -766,13 +927,28 @@ var Tooltip = function(){};
 var Context = extendClass('Context', null, Object, {
 	prefix: null,
 	lazyRender: null,
-	fInit: function() {
+	svgNode: null,
+	fInit: function(svgNode) {
 		this.prefix = Global.prefix;
 		this.lazyRender = Global.lazyRender;
+		this.svgNode = svgNode;
 	},
-	fDefs: function() {
-		// Return SVG definitions.
-	}
+	fSvgNode: function() {
+		if (!arguments.length) {
+			return this.svgNode;
+		} else {
+			this.svgNode = arugments[0];
+			return this;
+		}
+	},
+    fDefs: function () {
+        if (!arguments.length) {
+            return this.defs ? this.defs : (this.defs = d3.select(this.svgNode).append('defs'));
+        } else {
+            this.defs = arguments[0];
+            return this;
+        }
+    }
 });
 
 
@@ -858,6 +1034,9 @@ var Element = extendClass('Element', null, RendererCallback,  {
         
         return this;
     },
+    fClassNames: function() {
+    	return this.options.id ? this.options.id + ' ' + this.__className : this.__className;
+    },
     fBBox: function () {
     	 return this.d3Sel ? copy(this.d3Sel.bbox()): {};
     },
@@ -872,8 +1051,10 @@ var Element = extendClass('Element', null, RendererCallback,  {
         }
     }
 });;var DefaultTextOpts = {
+	id : '', // Here the id is same with class name with Dom element.
+	x:0,
+	y:0,
 	data:'',  
-	textAnchor:'',
 	format:'', // This is a format pattern or a function
 	font:'', // Font css styles
 	border:'', // Border css styles or svg stroke styles
@@ -881,29 +1062,171 @@ var Element = extendClass('Element', null, RendererCallback,  {
 	rotate:{
 		degree:'',
 		mode:''
-	}
+	},
+	align:'', // 'left', 'center', 'right', 'auto' == 'left'
+	verticalAlign:'' // 'top', 'center', 'bottom', 'auto' == 'top'
 };
 
 var Text = extendClass('Text', null, Element, {
 	_fRender:function(_d3Sel) {
-		var opts = this.options
-		,textUpdate = _d3Sel.selectAll(toClassKey(this.__className)).data(toArray(opts.data));
+		var opts = this.options,
+		classNames = this.fClassNames(),
+		textUpdate = _d3Sel.selectAll(toClassKey(classNames)).data(toArray(opts.data));
 		
 		textUpdate.exit().remove();
-		textUpdate.enter().append('text').attr('class', this.__className);
+		textUpdate.enter().append('text').attr('class', classNames);
 		
 		textUpdate
-		.text(function(d, i){
-			return format(d, opts.format);
+		.each(function(d, i){
+			var _this = d3.select(this), texts = d.split('\n');
+			if (texts.length <= 1) {
+				_this.text(function(d, i){
+					return format(d, opts.format);
+				});
+			} else {
+				for(var k in texts) {
+					_this.append('tspan').text(function() {
+						return format(texts[k], opts.format);
+					})
+					.attr('x', opts.x || 0)
+					.attr('dy', (k * 1) + 'em');
+				}
+			}
 		})
-		.call(setBounds, opts)
 		.style(adaptFontStyle(opts.font))
 		.style(adaptBorderStyle(opts.border))
 		.style(adaptFillStyle(opts.color))
-		.style(adaptCssStyle('text-anchor', opts.textAnchor))
+		.call(function(d3sel, options) {
+			// adjust dy with vertical align
+			var h = d3sel.bbox().height;
+			var offset = (!options.verticalAlign || options.verticalAlign === 'top') ? h : (options.verticalAlign === 'center' ? h /2 : 0);
+			if (typeof options.y === 'function') {
+				var yFunc = options.y;
+				options.y = function(){
+					return yFunc.apply(this, arguments) + offset;
+				};
+			} else {
+				options.y = (options.y || 0 ) + offset;
+			}
+			d3sel.call(setBounds, options);
+		 }, opts)
+		.style('text-anchor', text_adaptTextAnchor(opts.align))
 		.call(rotate, opts.rotate);
 	},
 });
+
+function text_adaptTextAnchor(align) {
+	return align === 'center' ? 'middle' : (align === 'right' ? 'end' : 'start');
+}
+
+
+;/**
+ * Merge options from text.
+ */
+var DefaultLabelOpts = {
+	x:0,
+	y:0,
+	margin:{},
+	padding:{},
+	border:{},
+	background:{
+		fill:null
+	},
+	data:'',  
+	format:'', // This is a format pattern or a function
+	font:'', // Font css styles
+	fontBorder:'', // Border css styles or svg stroke styles
+	fontColor:'', // Color css styles or svg fill styles
+	rotate:{
+		degree:'',
+		mode:''
+	},
+	align:'', // 'left', 'center', 'right', 'auto' == 'left'
+	verticalAlign:'' // 'top', 'center', 'bottom', 'auto' == 'top'
+};
+
+var Label = extendClass('Label', null, Element, {
+	_fRender:function(_d3Sel) {
+		var opts = this.options,
+		borderSel = null,
+		borderStrokeWidth = getBorderStrokeWidth(opts.border),
+		classNames = this.fClassNames(),
+		labelUpdate = _d3Sel.selectAll(toClassKey(classNames)).data(toArray(opts.data));
+		
+		opts.margin = adaptMargin(opts.margin);
+		opts.padding = adaptPadding(opts.padding);
+		
+		labelUpdate.exit().remove();
+		labelUpdate.enter().append('g').attr('class', classNames);
+		labelUpdate.call(translate, opts.x || 0, opts.y || 0, this.context)
+		.each(function(d, i){
+			var 
+			parent = d3.select(this),
+			outlineSel = parent.append('rect').attr('class', 'outline')
+			.attr({'x': 0, 'y': 0});
+			
+			
+			if (!emptyObject(opts.border) || !emptyObject(opts.background)) {
+				// Add border and background rect
+				borderSel = parent.append('rect').attr('class', 'border background')
+				.attr(adaptBorderStyle(opts.border))
+				.attr(adaptFillStyle(opts.background));
+			}
+			
+			textSel = parent.append('text').attr('class', 'text')
+			.each(function(d, i){
+				var _this = d3.select(this), texts = d.split('\n');
+				if (texts.length <= 1) {
+					_this.text(function(d, i){
+						return format(d, opts.format);
+					});
+				} else {
+					for(var k in texts) {
+						_this.append('tspan').text(function() {
+							return format(texts[k], opts.format);
+						})
+						.attr('x', opts.x || 0)
+						.attr('dy', (k * 1) + 'em');
+					}
+				}
+			 })
+			.style(adaptFontStyle(opts.font))
+			.style(adaptBorderStyle(opts.fontBorder))
+			.style(adaptFillStyle(opts.fontColor))
+			.style('text-anchor', text_adaptTextAnchor(opts.align));
+			
+			var outlineBBox = outlineSel.bbox();
+			var borderBBox = borderSel ? borderSel.bbox() : newBBoxObj();
+			var textBBox = textSel.bbox();
+			
+			borderBBox.x = opts.margin.left;
+			borderBBox.y = opts.margin.top;
+			textBBox.x = borderBBox.x + borderStrokeWidth + opts.padding.left;
+			textBBox.y = borderBBox.y + borderStrokeWidth + opts.padding.top;
+			borderBBox.width = (textBBox.x - borderBBox.x) * 2 + textBBox.width;
+			borderBBox.height = (textBBox.y - borderBBox.y) * 2 + textBBox.height;
+			outlineBBox.width = opts.margin.left + borderBBox.width + opts.margin.right;
+			outlineBBox.height = opts.margin.top + borderBBox.height + opts.margin.bottom;
+			
+			outlineSel.attr({'x': outlineBBox.x, 'y': outlineBBox.y, 'width': outlineBBox.width, 'height': outlineBBox.height});
+			if(borderSel) {
+				borderSel.attr({'x': borderBBox.x, 'y': borderBBox.y, 'width': borderBBox.width, 'height': borderBBox.height});
+			}
+			textSel.attr({'x': textBBox.x, 'y': textBBox.y + textBBox.height / (textSel.selectAll('tspan').size() || 1)});
+			// Adjust tspan position.
+			textSel.selectAll('tspan').attr('x', textSel.attr('x'));
+
+			// Adjust group translate coordinates with vertical align and horizontal align
+			var dx = opts.align === 'right' ? -outlineBBox.width : (opts.align === 'center' ? -outlineBBox.width / 2 : 0),
+				dy = opts.verticalAlign === 'bottom' ? -outlineBBox.height : (opts.verticalAlign === 'center' ? -outlineBBox.height / 2 : 0),
+				trans = translate(parent);
+			parent.call(translate, trans[0].x + dx, trans[0].y + dy, this.context)
+			.call(rotate, opts.rotate);
+		});
+	},
+});
+
+
 
 ;/**
  * New node file
@@ -912,7 +1235,26 @@ var birtchart = birtchart || {};
 birtchart.Global = Global;
 birtchart.Context = Context;
 birtchart.Text = Text;
+birtchart.Label = Label;
 
+var util = util || {};
+birtchart.util = util;
+util.DPI = DPI;
+util.getDPI = getDPI;
+util.uniqueId = uniqueId;
+util.clone = clone;
+util.copy = copy;
+util.merge = merge;
+util.isFunction = isFunction;
+util.isNumber = isNumber;
+util.isObject = isObject;
+util.isString = isString;
+util.emptyObject = emptyObject;
+util.toRadian = toRadian;
+util.toDegree = toDegree;
+util.toArray = toArray;
+util.rotateNode = rotateNode;
+util.adaptSize = adaptSize;
 
 window.birtchart = window.birtchart || birtchart;
 ;/**
