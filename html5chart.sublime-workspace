@@ -3,31 +3,155 @@
 	{
 		"selected_items":
 		[
+			[
+				"i",
+				"ih	innerHTML"
+			],
+			[
+				"axisLine",
+				"axisLineEnter  (variable)"
+			],
+			[
+				"background",
+				"backgroundUpdate"
+			],
+			[
+				"axis",
+				"Axis"
+			],
+			[
+				"majortick",
+				"majorTickUpdate"
+			],
+			[
+				"majorTick",
+				"majorTickEnter"
+			],
+			[
+				"minorTik",
+				"minorTickUpdate"
+			],
+			[
+				"ticklab",
+				"tickLabelOffset"
+			],
+			[
+				"axis_trans",
+				"axis_transformVertical"
+			],
+			[
+				"minorTick",
+				"minorTickOffset"
+			],
+			[
+				"minor",
+				"minorTickOffset"
+			],
+			[
+				"tickla",
+				"tickLabelOffset"
+			],
+			[
+				"linepa",
+				"linePathSel"
+			],
+			[
+				"defa",
+				"DEFAULT_TICK_LABEL_PADDING"
+			],
+			[
+				"defau",
+				"DEFAULT_MINOR_TICK_SIZE"
+			],
+			[
+				"def",
+				"DEFAULT_MAJOR_TICK_SIZE"
+			],
+			[
+				"adaptTick",
+				"axis_adaptTicksMode"
+			],
+			[
+				"axis_",
+				"axis_scaleRange"
+			],
+			[
+				"selet",
+				"selectAll"
+			],
+			[
+				"DEF",
+				"DEFAULT_MINOR_TICKS"
+			],
+			[
+				"de",
+				"DEFAULT_MAJOR_TICKS"
+			],
+			[
+				"tick",
+				"tickNumbers"
+			],
+			[
+				"style",
+				"style"
+			],
+			[
+				"fIn",
+				"fInitDefinitionPart"
+			]
 		]
 	},
 	"buffers":
 	[
-		{
-			"file": "js/src/misc/forcedDirectedGraph.js",
-			"settings":
-			{
-				"buffer_size": 1871,
-				"line_ending": "Unix"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 0.0,
+		"height": 47.0,
 		"selected_items":
 		[
+			[
+				"Package Control: insta",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: in",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: list",
+				"Package Control: List Packages"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Remove Package"
+			],
+			[
+				"Package Control: inst",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: insa",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: li",
+				"Package Control: List Packages"
+			],
+			[
+				"Package Control: instal",
+				"Package Control: Install Package"
+			]
 		],
-		"width": 0.0
+		"width": 602.0
 	},
 	"console":
 	{
-		"height": 0.0
+		"height": 359.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
 	},
 	"distraction_free":
 	{
@@ -40,16 +164,43 @@
 	},
 	"file_history":
 	[
+		"/Users/mac/git/birthtml5chart/js/src/util.js",
+		"/Users/mac/git/birthtml5chart/js/src/core.js",
+		"/Users/mac/git/birthtml5chart/js/src/export.js",
+		"/Users/mac/git/birthtml5chart/js/src/series.js",
+		"/Users/mac/git/birthtml5chart/js/src/legend.js",
+		"/Users/mac/git/birthtml5chart/js/src/chart.js",
+		"/Users/mac/git/birthtml5chart/js/src/d3extension.js",
+		"/Users/mac/git/birthtml5chart/js/src/text.js",
+		"/Users/mac/git/birthtml5chart/js/Gruntfile.js",
+		"/Users/mac/git/birthtml5chart/js/src/axis.js",
+		"/Users/mac/git/birthtml5chart/js/lib/d3.v3.js",
+		"/Users/mac/git/birthtml5chart/js/src/label.js",
+		"/Users/mac/git/birthtml5chart/js/test/testLabel.html",
+		"/Users/mac/git/birthtml5chart/js/test/textAxis.html",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/View In Browser/View In Browser.sublime-settings",
+		"/Users/mac/git/birthtml5chart/js/build/birthtml5chart.js",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
+		"/Users/mac/git/birthtml5chart/js/examples/bar.html",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Side Bar.sublime-settings",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/User/Side Bar.sublime-settings",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/JsFormat/Default (OSX).sublime-keymap",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/Emmet/Emmet.sublime-settings",
+		"/Users/mac/Library/Application Support/Sublime Text 3/Packages/Package Control/Package Control.sublime-settings",
+		"/Users/mac/git/birthtml5chart/js/src/misc/forcedDirectedGraph.js",
 		"/C/Users/Henry/AppData/Roaming/Sublime Text 2/Packages/Default/Preferences.sublime-settings",
 		"/C/Users/Henry/AppData/Roaming/Sublime Text 2/Packages/User/Default (Windows).sublime-keymap"
 	],
 	"find":
 	{
-		"height": 0.0
+		"height": 35.0
 	},
 	"find_in_files":
 	{
-		"height": 0.0,
+		"height": 93.0,
 		"where_history":
 		[
 		]
@@ -59,6 +210,37 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"dy",
+			"opts.tick",
+			"scale1Range",
+			"enable",
+			"axisPath",
+			"axis_path",
+			"d3_selection",
+			"function remove(",
+			"remove(",
+			"d3_selection_remove",
+			"d3_selection",
+			"d3_remove",
+			"remove(",
+			"scale",
+			"classNames",
+			"type",
+			"tickStyle",
+			"orient",
+			"tickStyle",
+			"orient",
+			"axis_adaptPosition",
+			"orient",
+			"position",
+			"orient",
+			"style",
+			"d3c_",
+			"opts(",
+			"enable",
+			"enabled",
+			" = ",
+			"enabled"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -66,6 +248,26 @@
 		"regex": false,
 		"replace_history":
 		[
+			"tickOpts",
+			"scaleRange",
+			"enabled",
+			"axisLinePath",
+			"axis_linePath",
+			"scale1",
+			"orient",
+			"tickMode",
+			"location",
+			"tickMode",
+			"location",
+			"axis_adaptTickMode",
+			"location",
+			"mode",
+			"location",
+			"mode",
+			"axis_",
+			"enabled",
+			"enable",
+			": "
 		],
 		"reverse": false,
 		"show_context": true,
@@ -76,42 +278,14 @@
 	"groups":
 	[
 		{
-			"selected": 0,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "js/src/misc/forcedDirectedGraph.js",
-					"settings":
-					{
-						"buffer_size": 1871,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								302,
-								302
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],
 	"incremental_find":
 	{
-		"height": 0.0
+		"height": 25.0
 	},
 	"input":
 	{
@@ -140,9 +314,18 @@
 		]
 	},
 	"menu_visible": true,
-	"replace":
+	"output.exec":
+	{
+		"height": 53.0
+	},
+	"output.find_results":
 	{
 		"height": 0.0
+	},
+	"project": "html5chart.sublime-project",
+	"replace":
+	{
+		"height": 64.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -161,10 +344,25 @@
 		],
 		"width": 380.0
 	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
 	"show_minimap": true,
-	"show_open_files": false,
+	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 150.0,
-	"status_bar_visible": true
+	"side_bar_width": 234.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
 }

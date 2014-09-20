@@ -1,4 +1,5 @@
 var DefaultTextOpts = {
+	enabled: true,
 	id : '', // Here the id is same with class name with Dom element.
 	x:0,
 	y:0,
@@ -21,6 +22,11 @@ var Text = extendClass('Text', null, Element, {
 		classNames = this.fClassNames(),
 		textUpdate = _d3Sel.selectAll(toClassKey(classNames)).data(toArray(opts.data));
 		
+		if (opts.enabled === false) {
+			textUpdate.remove();
+			return;
+		}
+
 		textUpdate.exit().remove();
 		textUpdate.enter().append('text').attr('class', classNames);
 		

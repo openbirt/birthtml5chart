@@ -6,6 +6,7 @@ birtchart.Global = Global;
 birtchart.Context = Context;
 birtchart.Text = Text;
 birtchart.Label = Label;
+birtchart.Axis = Axis;
 
 var util = util || {};
 birtchart.util = util;

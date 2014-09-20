@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script type="text/javascript" src="../lib/d3.v3.js"></script>
+<script type="text/javascript" src="../build/birthtml5chart.js"></script>
+</head>
+<body>
+<svg id="chart"></svg>
+<script>
+(function() {
+	var svg = d3.select('#chart');
+	//svg.append('rect').style('fill', 'yellow').style('stroke', 'black').attr('x', 0).attr('y', 30).attr('width',200).attr('height', 30);
+
+	var g = svg.append('g').attr('class', 'group');
+	svg.attr({
+		'x': 0,
+		'y': 0,
+		'width': 1200,
+		'height': 600
+	});
+
+	var opts = {
+		orient: 'x', // 'x' or 'y'
+		mode: 'linear', // 'linear', 'pow', 'log', 'sqrt', 'quantize', 'quantile', 'identity', 'ordinal', 'time'
+		domain: [100, 1000], // Actual values or value range to be presented on the axis.
+		reversed: false, // default direction of axis is left to right or bottom to top, <code>TRUE</code> means rigth to left or top to bottom.
+		location: 'bottom', // 'bottom', 'left', 'top', 'right'. x default is 'bottom', y default is 'left'
+		x: 0, // The x coordinate
+		y: 100, // The y coordinate
+		width: 800,
+		height: 200,
+		// background: {
+		// 	fill: 'gray'
+		// },
+		// border: {
+
+		// },
+		title: {
+			enabled: true,
+			position: 'bottom', // 'below', 'above', 'left', 'right'
+			anchor: 'center', // 'left', 'center', 'right' , 'top', 'bottom'
+			dx: 0,
+			dy: 0
+		},
+		line: {
+			enabled: true,
+			style: {
+				stroke:'blue',
+				strokeWidth:3,
+			}
+		},
+		tick: {
+			major: {
+				enabled: true,
+				mode: 'above', // 'below', 'above', 'left', 'right', 'cross'. x bottom default is 'above', x top default is 'below', y left default is 'right', y right default is 'left'.
+				numbers: 'auto',
+				size: 15,
+				style: {
+					stroke:'red',
+					strokeWidth:3
+				}
+			},
+			minor: {
+				enabled: true,
+				mode: 'above', // Same with major.mode.
+				numbers: 3,
+				size: 13,
+				style: {
+					stroke:'pink',
+					strokeWidth:3
+				}
+			},
+			label: {
+				enabled: true,
+				mode: 'below', // 'below', 'above', 'left', 'right' or 'same', 'opposite'. 'same' means same mode with tick.major.mode
+				stagger: false,
+				autoDrop: false, // Auto detect overlap label and drop it.
+				tickPadding: 3,
+				x: 0,
+				y: 0,
+				border: {
+					stroke: 'red',
+					strokeWidth: 1,
+					strokeOpacity: 0.5
+				},
+				background: {
+					fill: 'yellow',
+					fillOpacity: 1
+				},
+				data: [],
+				align: 'center', // 'left', 'center', 'right', 'auto' == 'left'
+				verticalAlign: 'top', // 'top', 'center', 'bottom', 'auto' == 'top'
+				format: null, // This is a format pattern or a function
+				font: {
+					fontSize: '20px',
+				},
+				fontBorder: {
+					stroke: 'green',
+					strokeWidth: 2,
+					strokeOpacity: 0.5
+				},
+				fontColor: {
+					fill: 'blue'
+				},
+				rotate: {
+					degree: -45,
+					mode: 'end'
+				}
+			}
+		},
+		mark: [{
+			enabled: true,
+			type: 'symbol', // 'symbol', 'line', 'band'
+			symbol: null, // Valid for symbol mark type.
+			size: null, // Valid for symbl mark type.
+			start: null, // Valid for symbol, line or band marks.
+			end: null, // Only valid for band mark.
+			min: null, // Indicate line or band min/max limits on opposite axis.
+			max: null, // Same with 'min'.
+			background: {}, // The fill style of this mark.
+			border: {}, // The border style of this mark.
+			label: {} // Mark label.
+		}]
+	}
+
+	var context = new birtchart.Context(svg.node());
+	var axis = new birtchart.Axis(context, null, opts);
+	axis.fRender(g);
+
+})()
+</script>
+</body>
+</html>

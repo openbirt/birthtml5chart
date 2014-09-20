@@ -42,17 +42,17 @@ var Context = extendClass('Context', null, Object, {
 		this.lazyRender = Global.lazyRender;
 		this.svgNode = svgNode;
 	},
-	fSvgNode: function() {
+	fSvgSel: function() {
 		if (!arguments.length) {
-			return this.svgNode;
+			return this.svgSel;
 		} else {
-			this.svgNode = arugments[0];
+			this.svgSel = arugments[0];
 			return this;
 		}
 	},
     fDefs: function () {
         if (!arguments.length) {
-            return this.defs ? this.defs : (this.defs = d3.select(this.svgNode).append('defs'));
+            return this.defs ? this.defs : (this.defs = this.svgSel.append('defs'));
         } else {
             this.defs = arguments[0];
             return this;

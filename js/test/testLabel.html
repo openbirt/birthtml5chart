@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script type="text/javascript" src="../lib/d3.v3.js"></script>
+<script type="text/javascript" src="../build/birthtml5chart.js"></script>
+</head>
+<body>
+<svg id="chart"></svg>
+<script>
+(function(){
+	var svg = d3.select('#chart');
+	//svg.append('rect').style('fill', 'yellow').style('stroke', 'black').attr('x', 0).attr('y', 30).attr('width',200).attr('height', 30);
+	
+	var g = svg.append('g').attr('class', 'group');
+	svg.attr({'x': 0, 'y': 0, 'width': 800, 'height':600});
+	
+	var opts = {
+			id: 't1',
+			x:200,
+			y:0,
+			margin:'10',
+			padding:'10',
+			border:{
+				stroke:'red',
+				strokeWidth:5,
+				strokeOpacity:0.5
+			}, 
+			background:{
+				fill:'yellow',
+				fillOpacity:1
+			},
+			data:['This is a text.'],  
+			align:'', // 'left', 'center', 'right', 'auto' == 'left'
+			verticalAlign:'top', // 'top', 'center', 'bottom', 'auto' == 'top'
+			format:null, // This is a format pattern or a function
+			font:{
+				fontSize:'30px',
+			},
+			fontBorder: {
+				stroke:'green',
+				strokeWidth:5,
+				strokeOpacity:0.5
+			},
+			fontColor: {
+				fill: 'blue'
+			},
+			rotate:{
+				degree:0,
+				mode:'start'
+			}
+		};
+	
+	
+	var context = new birtchart.Context(svg.node());
+	var label = new birtchart.Label(context, null, opts);
+	label.fRender(g);
+	
+	opts.id = 't2';
+	opts.x = 200;
+	opts.y = 100;
+	opts.align = 'center';
+	opts.rotate.degree = 0;
+	opts.rotate.mode = 'middle';
+	var label = new birtchart.Label(context, null, opts);
+	label.fRender(g);
+	
+		opts.id = 't3';
+	opts.x = 200;
+	opts.y = 200;
+	opts.align = 'right';
+	opts.rotate.degree = 0;
+	opts.rotate.mode = 'middle';
+	var label = new birtchart.Label(context, null, opts);
+	label.fRender(g);
+
+	opts.id = 't4';
+	opts.data = 'Hello!\nWelcome to Shanghai!';
+	opts.x = 0;
+	opts.y = 300;
+	opts.rotate.degree = 0;
+	opts.rotate.mode = 'middle';
+	var label = new birtchart.Label(context, null, opts);
+	label.fRender(g);
+	
+	opts.id = 't5';
+	opts.data = 'Hello!\nWelcome to Shanghai!';
+	opts.x = 600;
+	opts.y = 200;
+	opts.rotate.degree = -45;
+	opts.rotate.mode = 'middle';
+	var label = new birtchart.Label(context, null, opts);
+	label.fRender(g);
+	
+})()
+</script>
+</body>
+</html>
