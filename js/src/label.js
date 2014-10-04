@@ -60,7 +60,7 @@ var Label = extendClass('Label', null, Element, {
 						.style(adaptFillStyle(opts.background));
 				}
 
-				textSel = parent.append('text').attr('class', 'text')
+				var textSel = parent.append('text').attr('class', 'text')
 					.each(function(d, i) {
 						var _this = d3.select(this);
 						if (typeof d === 'string') {
@@ -132,5 +132,5 @@ var Label = extendClass('Label', null, Element, {
 				parent.call(translate, trans[0].x + dx, trans[0].y + dy, this.context)
 					.call(rotate, opts.rotate);
 			});
-	},
+	}
 });

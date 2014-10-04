@@ -114,7 +114,7 @@ function adaptSize(value, targetUnit, returnNum) {
         unit = value.indexOf('pt') > 0 ? 'pt' : value.indexOf('in') > 0 ? 'in' : value.indexOf('mm') > 0 ? 'mm' : value.indexOf('cm') > 0 ? 'cm' : 'px';
     }
     tmp = v;
-    
+
     // Calculate tmp based on px;
     if (unit === 'pt') {
         tmp = dpi * v / 72;
@@ -391,7 +391,7 @@ function rotate(d3Sel, _degree, _mode) {
         enabled = _degree.enabled !== false;
     }
 
-    return d3Sel.attr('transform', function(_d) {
+    return d3Sel.attr('transform', function (_d) {
         var box, cx, cy, tran = null,
             cxy, rotateExpr;
 
@@ -433,7 +433,7 @@ function translate(d3Sel, x, y, context) {
     if (arguments.length === 1) {
         // Return x and y of current translate.
         var transXY = [];
-        d3Sel.each(function() {
+        d3Sel.each(function (d, i, j) {
             var tran = this.getAttribute('transform'),
                 x, y;
             if (tran && tran.indexOf('translate') >= 0) {
@@ -450,16 +450,19 @@ function translate(d3Sel, x, y, context) {
                     }
                 }
             }
+            if (!transXY[j]) {
+                transXY.push({'x': 0, 'y': 0});
+            }
         });
         return transXY;
     }
 
-    function f(x, d, i) {
-        return typeof x === 'function' ? x(d, i, context) : x;
+    function f(x, d, i, j) {
+        return typeof x === 'function' ? x(d, i, j, context) : x;
     }
 
-    return d3Sel.attr('transform', function(d, i) {
-        var translateEpr = 'translate(' + f(x, d, i) + ',' + f(y, d, i) + ')',
+    return d3Sel.attr('transform', function (d, i, j) {
+        var translateEpr = 'translate(' + f(x, d, i, j) + ',' + f(y, d, i, j) + ')',
             tran = this.getAttribute('transform');
         if (tran) {
             if (tran.match(PATTERN_TRANSLATE)) {
@@ -561,7 +564,7 @@ function toCssStyle(style) {
         }
         return style;
     } else {
-        return style ? style.replace(/([A-Z])/g, function(m, s) {
+        return style ? style.replace(/([A-Z])/g, function (m, s) {
             return '-' + s.toLowerCase();
         }) : {};
     }
@@ -652,7 +655,7 @@ function adaptFill(fillValue, context) {
         lg = null,
         i = 0;
     if (typeof fillValue === 'function') {
-        return function(_this) {
+        return function (_this) {
             var args = context ? d3.merge(arguments, [context]) : arguments;
             return fillValue.apply(_this, args);
         };
@@ -768,7 +771,7 @@ function adaptColorGradient(gradientOpts) {
 function adaptDashstyle(v, width, context) {
     var i, value = v;
     if (typeof value === 'function') {
-        return function() {
+        return function () {
             var args = context ? d3.merge(arguments, [context]) : arguments;
             return value.apply(this, args);
         };
@@ -781,7 +784,7 @@ function adaptDashstyle(v, width, context) {
                 /(shortdashdot)/g, '3,1,1,1').replace(/(shortdot)/g, '1,1,')
                 .replace(/(shortdash)/g, '3,1,').replace(/(longdash)/g, '8,3,')
                 .replace(/(dot)/g, '1,3,').replace(/(dash)/g, '4,3,').replace(
-                    /,$/, '').split(','); // ending comma
+                /,$/, '').split(','); // ending comma
 
             i = value.length;
             while (i--) {
