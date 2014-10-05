@@ -6,8 +6,9 @@ var DEFAULT_TICK_LABEL_GAP = 3;
 
 var DefaultAxisOptions = {
     orient: 'x', // 'x' or 'y'
-    type: 'linear', // 'linear', 'pow', 'log', 'sqrt', 'quantize', 'quantile', 'identity', 'ordinal', 'time'
+    type: 'linear', // 'linear', 'pow', 'log', 'sqrt', 'quantize', 'quantile', 'identity', 'ordinal', 'time', 'threshold'
     domain: null, // Actual values or value range to be presented on the axis.
+    range: null,
     reversed: false, // default direction of axis is left to right or bottom to top, <code>TRUE</code> means rigth to left or top to bottom.
     location: 'bottom', // 'bottom', 'left', 'top', 'right'. x default is 'bottom', y default is 'left'
     x: 0, // The x coordinate
@@ -125,9 +126,9 @@ var Axis = extendClass('Axis', null, Element, {
         // Set scale domain and range.
         scale.domain(opts.domain);
         if (opts.orient === 'x') {
-            scale.range(opts.reversed ? [w, 0] : [0, w]);
+            scale.range(opts.range ? opts.range : (opts.reversed ? [w, 0] : [0, w]));
         } else if (opts.orient === 'y') {
-            scale.range(opts.reversed ? [0, h] : [h, 0]);
+            scale.range(opts.range ? opts.range : (opts.reversed ? [0, h] : [h, 0]));
         }
 
         var oldScale = this.__scale__ || scale,
@@ -255,6 +256,14 @@ var Axis = extendClass('Axis', null, Element, {
             return this.options.domain;
         } else {
             this.options.domain = arguments[0];
+            return this;
+        }
+    },
+    fRange: function() {
+        if (!arguments.length) {
+            return this.options.range;
+        } else {
+            this.options.range = arguments[0];
             return this;
         }
     },
