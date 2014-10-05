@@ -126,35 +126,37 @@
             ]
         }
 
-        opts.tick.major.position = 'below';
+        opts.tick.major.position = 'above';
         opts.tick.minor.position = 'above';
-        opts.tick.label.position = 'same';
+        opts.tick.label.position = 'opposite';
         opts.tick.label.align = 'auto';
         var context = new birtchart.Context(svg.node());
         var axis = new birtchart.Axis(context, null, opts);
-        var g = svg.append('g').attr('class', 'group');
+        var g = svg.append('g').attr('class', 'canvas');
         axis.fRender(g);
-
-
-        //opts = birtchart.util.clone(opts);
-//        opts.domain = [300, 3000];
-//        axis.fRender(g);
 
         opts = birtchart.util.clone(opts);
-        opts.orient = 'y';
-        opts.x = 100;
-        opts.y = 300;
-        opts.width = 300;
-        opts.height = 600;
-        opts.location = 'left';
-        opts.tick.major.enabled = true;
-        opts.tick.label.position = 'right';
-        opts.tick.label.align = 'left';
-
-        context = new birtchart.Context(svg.node());
-        axis = new birtchart.Axis(context, null, opts);
-        g = svg.append('g').attr('class', 'group');
+        opts.domain = [300, 3000];
+        opts.tick.minor.style.stroke = 'yellow';
+//        axis.fDomain([300, 3000]);
+        axis.fOptions(opts);
         axis.fRender(g);
+
+//        opts = birtchart.util.clone(opts);
+//        opts.orient = 'y';
+//        opts.x = 100;
+//        opts.y = 300;
+//        opts.width = 300;
+//        opts.height = 600;
+//        opts.location = 'left';
+//        opts.tick.major.enabled = true;
+//        opts.tick.label.position = 'right';
+//        opts.tick.label.align = 'left';
+//
+//        context = new birtchart.Context(svg.node());
+//        axis = new birtchart.Axis(context, null, opts);
+//        g = svg.append('g').attr('class', 'group');
+//        axis.fRender(g);
     })()
 </script>
 </body>

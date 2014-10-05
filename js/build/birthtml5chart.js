@@ -1443,46 +1443,47 @@ var Axis = extendClass('Axis', null, Element, {
             scale.range(opts.reversed ? [0, h] : [h, 0]);
         }
 
-        var scale0 = this.__scale__ || scale,
-            scale1 = this.__scale__ = scale.copy();
+        var oldScale = this.__scale__ || scale,
+            curScale = this.__scale__ = scale.copy();
 
         // Ticks, or domain values for ordinal scales.
-        var ticks = scale1.ticks ? scale1.ticks.apply(scale1, [majorOpts.tickNumbers]) : scale1.domain(),
-            majorTickUpdate = axisUpdate.selectAll('.major.tick').data(ticks, scale1),
-            majorTickExit = d3.transition(majorTickUpdate.exit()).style('opacity', 1e-6).remove(),
-            majorTickEnter = majorTickUpdate.enter().insert('g', '.axis.line').attr('class', 'major tick').style(toCssStyle(majorOpts.style)).style('opacity', 1e-6),
-            labelFormat = String;
-        majorTickUpdate = d3.transition(majorTickUpdate).style('opacity', 1);
+        var ticks = curScale.ticks ? curScale.ticks.apply(curScale, [majorOpts.tickNumbers]) : curScale.domain(),
+        majorTickUpdate = axisUpdate.selectAll('.major-tick').data(ticks, curScale),
+            majorTickExit = d3.transition(majorTickUpdate.exit()).remove(),
+        majorTickEnter = d3.transition(majorTickUpdate.enter()).insert('g', '.axis-line').attr('class', 'major-tick'),
+        labelFormat = String;
+        majorTickUpdate = d3.transition(axisUpdate.selectAll('.major-tick'));
 
         // Init tick label formatter.
         if (typeof labelOpts.format === 'function') {
             labelFormat = labelOpts.format;
         } else {
-            labelFormat = scale1.tickFormat ? scale1.tickFormat.apply(scale1, [majorOpts.tickNumbers], labelOpts.format) : (labelOpts.format || String);
+            labelFormat = curScale.tickFormat ? curScale.tickFormat.apply(curScale, [majorOpts.tickNumbers], labelOpts.format) : (labelOpts.format || String);
         }
         labelOpts.format = labelFormat;
 
         if (minorOpts && minorOpts.enabled !== false) {
-            var minorTicks = axis_minorTicksDivide(scale1, ticks, minorOpts.numbers),
-                minorTickUpdate = axisUpdate.selectAll('minor tick').data(minorTicks, String),
-                minorTickExit = d3.transition(minorTickUpdate.exit()).style('stroke-opacity', 1e-6).remove(),
-                minorTickEnter = minorTickUpdate.enter().insert('line', '.tick').attr('class', 'minor tick line').style(toCssStyle(minorOpts.style)),
+            var minorTicks = axis_minorTicksDivide(curScale, ticks, minorOpts.numbers),
+                minorTickUpdate = axisUpdate.selectAll('.minor-tick').data(minorTicks, String),
+                minorTickExit = minorTickUpdate.exit().remove(),
+                minorTickEnter = minorTickUpdate.enter().insert('line', '.major-tick').attr('class', 'minor-tick').style(toCssStyle(minorOpts.style)),
                 hasMinor = true;
-            minorTickUpdate = d3.transition(minorTickUpdate).style(toCssStyle(minorOpts.style));
+            minorTickUpdate = axisUpdate.selectAll('.minor-tick').style(toCssStyle(minorOpts.style));
         }
 
         // Axis axis line, domain.
-        var range = axis_scaleRange(scale1),
-            axisLineUpdate = axisUpdate.selectAll('.axis.line').data([opts.orient]),
-            axisLineEnter = axisLineUpdate.enter().append('path').attr('class', 'axis line').style('fill', 'none');
+        var range = axis_scaleRange(curScale),
+            axisLineUpdate = axisUpdate.selectAll('.axis-line').data([opts.orient]),
+            axisLineEnter = axisLineUpdate.enter().append('path').attr('class', 'axis-line').style('fill', 'none');
         axisLineUpdate = d3.transition(axisLineUpdate);
 
         // Add major ticks
         if (majorOpts && majorOpts.enabled !== false) {
-            majorTickEnter.append('line').attr('class', 'major tick line').style('fill', 'none');
+            majorTickEnter.append('line').attr('class', 'major-tick-line').style('fill', 'none').style(toCssStyle(majorOpts.style));
         }
+
         // Add major tick labels
-        labelOpts.id = 'major tick label';
+        labelOpts.id = 'tick-label';
         labelOpts.align = labelOpts.align || 'center';
         var label = null, _this = this;
         majorTickUpdate.each(function (d, i) {
@@ -1492,8 +1493,8 @@ var Axis = extendClass('Axis', null, Element, {
             label.fRender(d3.select(this));
         });
 
-        var majorTickLineSel = majorTickUpdate.selectAll('.major.tick.line'),
-            tickLabelSel = majorTickEnter.selectAll('g.major.tick.label');
+        var majorTickLineSel = majorTickUpdate.selectAll('.major-tick-line'),
+            tickLabelSel = majorTickEnter.selectAll('.tick-label');
 
         var majorTickOffset = axis_tickOffset(majorOpts, majorOpts.size, opts.location),
             minorTickOffset = axis_tickOffset(minorOpts, minorOpts.size, opts.location),
@@ -1529,10 +1530,10 @@ var Axis = extendClass('Axis', null, Element, {
         // - any entering ticks are undefined in the old scale
         // - any exiting ticks are undefined in the new scale
         // Therefor, we only need to transition updating ticks.
-        if (scale1.rangeBand) {
-            var dx = scale1.rangeBand() / 2,
+        if (curScale.rangeBand) {
+            var dx = curScale.rangeBand() / 2,
                 x = function (d) {
-                    return scale1(d) + dx;
+                    return curScale(d) + dx;
                 };
             majorTickEnter.call(tickTransform, x);
             majorTickUpdate.call(tickTransform, x);
@@ -1541,18 +1542,26 @@ var Axis = extendClass('Axis', null, Element, {
         // - enter new ticks from the old scale
         // - exit old ticks to the new scale
         else {
-            majorTickEnter.call(tickTransform, scale0);
-            majorTickUpdate.call(tickTransform, scale1);
-            majorTickExit.call(tickTransform, scale1);
+            majorTickEnter.call(tickTransform, oldScale);
+            majorTickUpdate.call(tickTransform, curScale);
+            majorTickExit.call(tickTransform, curScale);
             if (hasMinor) {
-                minorTickEnter.call(tickTransform, scale0);
-                minorTickUpdate.call(tickTransform, scale1);
-                minorTickExit.call(tickTransform, scale1);
+                minorTickEnter.call(tickTransform, oldScale);
+                minorTickUpdate.call(tickTransform, curScale);
+                minorTickExit.call(tickTransform, curScale);
             }
         }
 
         // Adjust positions
         backgroundUpdate.call(translate, axisUpdate.bbox(true).x, axisUpdate.bbox(false).y, context);
+    },
+    fOptions: function() {
+        if (!arguments.length) {
+            return this.options;
+        } else {
+            this.options = arguments[0];
+            return this;
+        }
     },
     fDomain: function () {
         if (!arguments.length) {
