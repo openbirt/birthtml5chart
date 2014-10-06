@@ -7,7 +7,7 @@ var DefaultOptions = {
 		x:0,
 		y:0,
 		width:0,
-		height:0,
+		height:0
 
 	},
 	title: {
@@ -50,8 +50,7 @@ var Chart = extendClass('Chart', null, Element, {
 	legend: null,
 	_fRender: function(_d3Sel) {
 		var opts = this.options,
-			classNames = this.fClassNames(),
-
+			classNames = this.fClassNames();
 
 			// Create svg node and init svg definitions.
 			if (this.fInitSvgPart(_d3Sel)) {

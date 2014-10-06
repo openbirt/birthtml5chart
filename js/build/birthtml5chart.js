@@ -17,14 +17,14 @@ d3.selection.prototype.bbox = function (refresh) {
         for (var group = this[j], i = 0, n = group.length; i < n; i++) {
           var node = group[i];
           if (node && (node.nodeName === 'g' || node.nodeName === 'text')) {
-              var bbox = node._bbox;
-              if (!bbox || refresh) {
-                  bbox = bbox || node.getBBox();
+              var _bbox = node._bbox;
+              if (!_bbox || refresh) {
+                  _bbox = bbox(node, refresh);
               }
-              this._bbox.x = (bbox.x < this._bbox.x) ? bbox.x: this._bbox.x;
-              this._bbox.y = (bbox.y < this._bbox.y) ? bbox.y : this._bbox.y;
-              this._bbox.width = (bbox.x + bbox.width > this._bbox.x + this._bbox.width) ? bbox.width: this._bbox.width;
-              this._bbox.height = (bbox.y + bbox.height > this._bbox.y + this._bbox.height) ? bbox.height: this._bbox.height;
+              this._bbox.x = (_bbox.x < this._bbox.x) ? _bbox.x: this._bbox.x;
+              this._bbox.y = (_bbox.y < this._bbox.y) ? _bbox.y : this._bbox.y;
+              this._bbox.width = (_bbox.x + _bbox.width > this._bbox.x + this._bbox.width) ? _bbox.width: this._bbox.width;
+              this._bbox.height = (_bbox.y + _bbox.height > this._bbox.y + this._bbox.height) ? _bbox.height: this._bbox.height;
           };
         }
     }
@@ -42,6 +42,7 @@ var PATTERN_TRANSLATE = /translate\(.*?\)/g;
 var PATTERN_SCALE = /scale\(.*?\)/g;
 var PATTERN_SKEW = /skew[XY]{1}\(.*?\)/g;
 var PATTERN_MATRIX = /matrix\(.*?\)/g;
+var TRANSPARENCY = 1e-6;
 
 /** Check if specified value is number.
  *
@@ -275,6 +276,10 @@ function bbox(node, refresh) {
         'width': 0,
         'height': 0
     };
+    var rotate = rotateNode(node);
+    if (rotate.degree != 0) {
+        b = rotatedBoundingBox(b, toRadian(rotate.degree));
+    }
     node._bbox = {
         'x': b.x,
         'y': b.y,
@@ -283,6 +288,39 @@ function bbox(node, refresh) {
     };
     return node._bbox;
 }
+
+/**
+ * Compute new bounding box for rotated case.
+ * The default rotation point is centre point of box.
+ *
+ * @link {http://stackoverflow.com/questions/10392658/calculate-the-bounding-boxs-x-y-height-and-width-of-a-rotated-element-via-jav}
+ *
+ * @param bbox
+ * @param radian
+ * @returns {{x: Number, width: Number, y: Number, height: Number}}
+ */
+function rotatedBoundingBox(bbox, radian) {
+    var x = bbox.x, y = bbox.y, width = bbox.width, height = bbox.height, w, h;
+
+    w = Math.sin(radian) * height + Math.cos(radian) * width;
+    h = Math.sin(radian) * width + Math.cos(radian) * height;
+
+    if (w < 0) {
+        w = Math.abs(w);
+    }
+    if (h < 0) {
+        h = Math.abs(h);
+    }
+
+    x += (width - w) / 2;
+    y += (height - h) / 2;
+
+    //# Return an object to the caller representing the x/y and width/height of the calculated .boundingBox
+    return {
+        'x': parseInt(x), 'width': parseInt(w),
+        'y': parseInt(y), 'height': parseInt(h)
+    }
+};
 
 
 /**
@@ -376,6 +414,23 @@ function rotateNode(svgNode, _degree, _mode) {
     var degree = _degree,
         mode = _mode,
         enabled = true;
+
+    if (!degree && !mode) {
+        // Get rotate
+        var tran = svgNode.getAttribute('transform');
+        if (tran) {
+            tran = tran.match(PATTERN_ROTATE);
+            if (tran && tran.length) {
+                tran = tran[0].match(/([\-0-9\.]+)/g);
+                return {'degree': parseFloat(tran[0]), 'x': parseFloat(tran[1] || 0), 'y': parseFloat(tran[2] || 0)};
+            } else {
+                return {'degree': 0, 'x': 0, 'y': 0};
+            }
+        } else {
+            return {'degree': 0, 'x': 0, 'y': 0};
+        }
+    }
+
     if (typeof _degree === 'object' && !mode) {
         degree = _degree.degree;
         mode = _degree.mode;
@@ -407,6 +462,11 @@ function rotateNode(svgNode, _degree, _mode) {
             tran = rotateExpr;
         }
         svgNode.setAttribute('transform', tran);
+    } else {
+        // Remove rotate attribute.
+        tran = svgNode.getAttribute('transform');
+        tran = tran.replace(PATTERN_ROTATE, '');
+        svgNode.setAttribute('transform', tran);
     }
     return svgNode;
 }
@@ -422,6 +482,22 @@ function rotate(d3Sel, _degree, _mode) {
     var degree = _degree,
         mode = _mode,
         enabled = true;
+    if (!degree && !mode) {
+        // Get rotate
+        var tran = d3Sel.attr('transform');
+        if (tran) {
+            tran = tran.match(PATTERN_ROTATE);
+            if (tran && tran.length) {
+                tran = tran[0].match(/([\-0-9\.]+)/g);
+                return {'degree': parseFloat(tran[0]), 'x': parseFloat(tran[1] || 0), 'y': parseFloat(tran[2] || 0)};
+            } else {
+                return {'degree': 0, 'x': 0, 'y': 0};
+            }
+        } else {
+            return {'degree': 0, 'x': 0, 'y': 0};
+        }
+    }
+
     if (typeof _degree === 'object' && !mode) {
         degree = _degree.degree;
         mode = _degree.mode;
@@ -454,6 +530,10 @@ function rotate(d3Sel, _degree, _mode) {
             } else {
                 tran = rotateExpr;
             }
+        } else {
+            // Remove rotate attribute.
+            tran = this.getAttribute('transform');
+            tran = tran.replace(PATTERN_ROTATE, '');
         }
         return tran;
     });
@@ -1168,7 +1248,7 @@ var Text = extendClass('Text', null, Element, {
 		 }, opts)
 		.style('text-anchor', text_adaptTextAnchor(opts.align))
 		.call(rotate, opts.rotate);
-	},
+	}
 });
 
 function text_adaptTextAnchor(align) {
@@ -1180,147 +1260,150 @@ function text_adaptTextAnchor(align) {
  * Merge options from text.
  */
 var DefaultLabelOpts = {
-	enabled: true,
+    enabled: true,
     x: 0,
-	y: 0,
-	margin: {},
-	padding: {},
-	border: {},
-	background: {
-		fill: null
-	},
-	data: '',
-	format: '', // This is a format pattern or a function
-	font: '', // Font css styles
-	fontBorder: '', // Border css styles or svg stroke styles
-	fontColor: '', // Color css styles or svg fill styles
-	rotate: {
-		degree: '',
-		mode: ''
-	},
-	align: '', // 'left', 'center', 'right', 'auto' == 'left'
-	verticalAlign: '' // 'top', 'center', 'bottom', 'auto' == 'top'
+    y: 0,
+    margin: {},
+    padding: {},
+    border: {},
+    background: {
+        fill: null
+    },
+    data: '',
+    format: '', // This is a format pattern or a function
+    font: '', // Font css styles
+    fontBorder: '', // Border css styles or svg stroke styles
+    fontColor: '', // Color css styles or svg fill styles
+    rotate: {
+        degree: '',
+        mode: ''
+    },
+    align: '', // 'left', 'center', 'right', 'auto' == 'left'
+    verticalAlign: '' // 'top', 'center', 'bottom', 'auto' == 'top'
 };
 
 var Label = extendClass('Label', null, Element, {
-	_fRender: function(_d3Sel) {
-		var opts = this.options,
-			borderSel = null,
-			borderStrokeWidth = getBorderStrokeWidth(opts.border),
-			classNames = this.fClassNames(),
-			labelUpdate = _d3Sel.selectAll(toClassKey(classNames)).data(toArray(opts.data));
+    _fRender: function (_d3Sel) {
+        var opts = this.options,
+            borderSel = null,
+            borderStrokeWidth = getBorderStrokeWidth(opts.border),
+            classNames = this.fClassNames(),
+            labelUpdate = _d3Sel.selectAll(toClassKey(classNames)).data(toArray(opts.data));
 
-		if (opts.enabled === false) {
-			labelUpdate.remove();
-			return;
-		}
-		
-		opts.margin = adaptMargin(opts.margin);
-		opts.padding = adaptPadding(opts.padding);
+        if (opts.enabled === false) {
+            labelUpdate.remove();
+            return;
+        }
 
-		labelUpdate.exit().remove();
-		labelUpdate.enter().append('g').attr('class', classNames);
-		labelUpdate.call(translate, opts.x || 0, opts.y || 0, this.context)
-			.each(function(d, i) {
-				var
-					parent = d3.select(this),
-					outlineSel = parent.append('rect').attr('class', 'outline')
-					.attr({
-						'x': 0,
-						'y': 0
-					});
+        opts.margin = adaptMargin(opts.margin);
+        opts.padding = adaptPadding(opts.padding);
+
+        labelUpdate.exit().remove();
+        labelUpdate.enter().append('g').attr('class', classNames);
+        labelUpdate.call(translate, opts.x || 0, opts.y || 0, this.context)
+            .each(function (d, i) {
+                var
+                    parent = d3.select(this),
+                    outlineSel = parent.append('rect').attr('class', 'outline')
+                        .attr({
+                            'x': 0,
+                            'y': 0
+                        })
+                        .style('fill-opacity', TRANSPARENCY);
 
 
-				if (!emptyObject(opts.border) || !emptyObject(opts.background)) {
-					// Add border and background rect
-					borderSel = parent.append('rect').attr('class', 'border background')
-						.style(adaptBorderStyle(opts.border))
-						.style(adaptFillStyle(opts.background));
-				}
+                if (!emptyObject(opts.border) || !emptyObject(opts.background)) {
+                    // Add border and background rect
+                    borderSel = parent.append('rect').attr('class', 'border background')
+                        .style('fill-opacity', TRANSPARENCY)
+                        .style(adaptBorderStyle(opts.border))
+                        .style(adaptFillStyle(opts.background));
+                }
 
-				var textSel = parent.append('text').attr('class', 'text')
-					.each(function(d, i) {
-						var _this = d3.select(this);
-						if (typeof d === 'string') {
-							var texts = d.split('\n');
-						
-							if (texts.length <= 1) {
-								_this.text(function(d, i) {
-									return format(d, opts.format);
-								});
-							} else {
-								for (var k in texts) {
-									_this.append('tspan').text(function() {
-										return format(texts[k], opts.format);
-									})
-									.attr('x', opts.x || 0)
-									.attr('dy', (k * 1) + 'em');
-								}
-							}
-						} else {
-							_this.text(function(d, i) {
-									return format(d, opts.format);
-							});
-						}
-					})
-					.style(adaptFontStyle(opts.font))
-					.style(adaptBorderStyle(opts.fontBorder))
-					.style(adaptFillStyle(opts.fontColor));
+                var textSel = parent.append('text').attr('class', 'text')
+                    .each(function (d, i) {
+                        var _this = d3.select(this);
+                        if (typeof d === 'string') {
+                            var texts = d.split('\n');
 
-					//.style('text-anchor', text_adaptTextAnchor(opts.align));
+                            if (texts.length <= 1) {
+                                _this.text(function (d, i) {
+                                    return format(d, opts.format);
+                                });
+                            } else {
+                                for (var k in texts) {
+                                    _this.append('tspan').text(function () {
+                                        return format(texts[k], opts.format);
+                                    })
+                                        .attr('x', opts.x || 0)
+                                        .attr('dy', (k * 1) + 'em');
+                                }
+                            }
+                        } else {
+                            _this.text(function (d, i) {
+                                return format(d, opts.format);
+                            });
+                        }
+                    })
+                    .style(adaptFontStyle(opts.font))
+                    .style(adaptBorderStyle(opts.fontBorder))
+                    .style(adaptFillStyle(opts.fontColor));
 
-				var outlineBBox = outlineSel.bbox();
-				var borderBBox = borderSel ? borderSel.bbox() : newBBoxObj();
-				var textBBox = textSel.bbox();
+                //.style('text-anchor', text_adaptTextAnchor(opts.align));
 
-				borderBBox.x = opts.margin.left;
-				borderBBox.y = opts.margin.top;
-				textBBox.x = borderBBox.x + borderStrokeWidth + opts.padding.left;
-				textBBox.y = borderBBox.y + borderStrokeWidth + opts.padding.top;
-				borderBBox.width = (textBBox.x - borderBBox.x) * 2 + textBBox.width;
-				borderBBox.height = (textBBox.y - borderBBox.y) * 2 + textBBox.height;
-				outlineBBox.width = opts.margin.left + borderBBox.width + opts.margin.right;
-				outlineBBox.height = opts.margin.top + borderBBox.height + opts.margin.bottom;
+                var outlineBBox = outlineSel.bbox();
+                var borderBBox = borderSel ? borderSel.bbox() : newBBoxObj();
+                var textBBox = textSel.bbox();
 
-				outlineSel.attr({
-					'x': outlineBBox.x,
-					'y': outlineBBox.y,
-					'width': outlineBBox.width,
-					'height': outlineBBox.height
-				});
-				if (borderSel) {
-					borderSel.attr({
-						'x': borderBBox.x,
-						'y': borderBBox.y,
-						'width': borderBBox.width,
-						'height': borderBBox.height
-					});
-				}
-				textSel.attr({
-					'x': textBBox.x,
-					'y': textBBox.y + textBBox.height / (textSel.selectAll('tspan').size() || 1)
-				});
-				// Adjust tspan position.
-				textSel.selectAll('tspan').attr('x', textSel.attr('x'));
+                borderBBox.x = opts.margin.left;
+                borderBBox.y = opts.margin.top;
+                textBBox.x = borderBBox.x + borderStrokeWidth + opts.padding.left;
+                textBBox.y = borderBBox.y + borderStrokeWidth + opts.padding.top;
+                borderBBox.width = (textBBox.x - borderBBox.x) * 2 + textBBox.width;
+                borderBBox.height = (textBBox.y - borderBBox.y) * 2 + textBBox.height;
+                outlineBBox.width = opts.margin.left + borderBBox.width + opts.margin.right;
+                outlineBBox.height = opts.margin.top + borderBBox.height + opts.margin.bottom;
 
-				// Adjust group translate coordinates with vertical align and horizontal align
-				var dx = opts.align === 'right' ? -outlineBBox.width : (opts.align === 'center' ? -outlineBBox.width / 2 : 0),
-					dy = opts.verticalAlign === 'bottom' ? -outlineBBox.height : (opts.verticalAlign === 'center' ? -outlineBBox.height / 2 : 0),
-					trans = translate(parent);
-				parent.call(translate, trans[0].x + dx, trans[0].y + dy, this.context)
-					.call(rotate, opts.rotate);
-			});
-	}
+                outlineSel.attr({
+                    'x': outlineBBox.x,
+                    'y': outlineBBox.y,
+                    'width': outlineBBox.width,
+                    'height': outlineBBox.height
+                });
+                if (borderSel) {
+                    borderSel.attr({
+                        'x': borderBBox.x,
+                        'y': borderBBox.y,
+                        'width': borderBBox.width,
+                        'height': borderBBox.height
+                    });
+                }
+                textSel.attr({
+                    'x': textBBox.x,
+                    'y': textBBox.y + textBBox.height / (textSel.selectAll('tspan').size() || 1)
+                });
+                // Adjust tspan position.
+                textSel.selectAll('tspan').attr('x', textSel.attr('x'));
+
+                // Adjust group translate coordinates with vertical align and horizontal align
+                var dx = opts.align === 'right' ? -outlineBBox.width : (opts.align === 'center' ? -outlineBBox.width / 2 : 0),
+                    dy = opts.verticalAlign === 'bottom' ? -outlineBBox.height : (opts.verticalAlign === 'center' ? -outlineBBox.height / 2 : 0),
+                    trans = translate(parent);
+                parent.call(translate, trans[0].x + dx, trans[0].y + dy, this.context)
+                    .call(rotate, opts.rotate);
+            });
+    }
 });;var DEFAULT_MAJOR_TICKS = 10;
 var DEFAULT_MINOR_TICKS = 3;
 var DEFAULT_MAJOR_TICK_SIZE = 5;
 var DEFAULT_MINOR_TICK_SIZE = 3;
-var DEFAULT_TICK_LABEL_GAP = 3;
+var DEFAULT_LABEL_GAP = 3;
 
 var DefaultAxisOptions = {
     orient: 'x', // 'x' or 'y'
-    type: 'linear', // 'linear', 'pow', 'log', 'sqrt', 'quantize', 'quantile', 'identity', 'ordinal', 'time'
+    type: 'linear', // 'linear', 'pow', 'log', 'sqrt', 'quantize', 'quantile', 'identity', 'ordinal', 'time', 'threshold'
     domain: null, // Actual values or value range to be presented on the axis.
+    range: null,
     reversed: false, // default direction of axis is left to right or bottom to top, <code>TRUE</code> means rigth to left or top to bottom.
     location: 'bottom', // 'bottom', 'left', 'top', 'right'. x default is 'bottom', y default is 'left'
     x: 0, // The x coordinate
@@ -1336,9 +1419,10 @@ var DefaultAxisOptions = {
     title: {
         enabled: true,
         position: 'bottom', // 'below', 'above', 'left', 'right'
-        anchor: 'center', // 'left', 'center', 'right' , 'top', 'bottom'
-        dx: 0,
-        dy: 0
+        gap: 3
+        //anchor: 'center', // 'left', 'center', 'right' , 'top', 'bottom'
+        //dx: 0,
+        //dy: 0
     },
     line: {
         enabled: true,
@@ -1362,11 +1446,11 @@ var DefaultAxisOptions = {
         label: {
             enabled: true,
             position: 'below', // 'below', 'above', 'left', 'right' or 'same', 'opposite'. 'same' means same mode with tick.major.position
-            stagger: false,
-            autoDrop: false, // Auto detect overlap label and drop it.
-            gap: 3,
-            dx: 0,
-            dy: 0
+            //stagger: false,
+            //autoDrop: false, // Auto detect overlap label and drop it.
+            gap: 3
+            //dx: 0,
+            //dy: 0
         }
     },
     mark: [
@@ -1390,6 +1474,7 @@ var Axis = extendClass('Axis', null, Element, {
     _fRender: function (_d3Sel) {
         var context = this.context,
             opts = this.options,
+            titleOpts = opts.title,
             lineOpts = opts.line,
             tickOpts = opts.tick,
             majorOpts = tickOpts.major,
@@ -1412,8 +1497,10 @@ var Axis = extendClass('Axis', null, Element, {
         minorOpts.numbers = minorOpts.numbers || DEFAULT_MINOR_TICKS;
         majorOpts.size = majorOpts.size || DEFAULT_MAJOR_TICK_SIZE;
         minorOpts.size = minorOpts.size || DEFAULT_MINOR_TICK_SIZE;
-        labelOpts.gap = labelOpts.gap || DEFAULT_TICK_LABEL_GAP;
+        labelOpts.gap = labelOpts.gap || DEFAULT_LABEL_GAP;
+        titleOpts.gap = titleOpts.gap || DEFAULT_LABEL_GAP;
         axis_adaptTickOpts(tickOpts, opts.location);
+        axis_adaptLabelAlign(opts.title, opts.location);
 
         // Remove unused axes and new axes.
         axisUpdate.exit().remove();
@@ -1438,9 +1525,9 @@ var Axis = extendClass('Axis', null, Element, {
         // Set scale domain and range.
         scale.domain(opts.domain);
         if (opts.orient === 'x') {
-            scale.range(opts.reversed ? [w, 0] : [0, w]);
+            scale.range(opts.range ? opts.range : (opts.reversed ? [w, 0] : [0, w]));
         } else if (opts.orient === 'y') {
-            scale.range(opts.reversed ? [0, h] : [h, 0]);
+            scale.range(opts.range ? opts.range : (opts.reversed ? [0, h] : [h, 0]));
         }
 
         var oldScale = this.__scale__ || scale,
@@ -1448,11 +1535,11 @@ var Axis = extendClass('Axis', null, Element, {
 
         // Ticks, or domain values for ordinal scales.
         var ticks = curScale.ticks ? curScale.ticks.apply(curScale, [majorOpts.tickNumbers]) : curScale.domain(),
-        majorTickUpdate = axisUpdate.selectAll('.major-tick').data(ticks, curScale),
-            majorTickExit = d3.transition(majorTickUpdate.exit()).remove(),
-        majorTickEnter = d3.transition(majorTickUpdate.enter()).insert('g', '.axis-line').attr('class', 'major-tick'),
-        labelFormat = String;
-        majorTickUpdate = d3.transition(axisUpdate.selectAll('.major-tick'));
+            majorTickUpdate = axisUpdate.selectAll('.major-tick').data(ticks, curScale),
+            majorTickExit = majorTickUpdate.exit().remove(),
+            majorTickEnter = majorTickUpdate.enter().insert('g', '.axis-line').attr('class', 'major-tick'),
+            labelFormat = String;
+        majorTickUpdate = axisUpdate.selectAll('.major-tick');
 
         // Init tick label formatter.
         if (typeof labelOpts.format === 'function') {
@@ -1523,8 +1610,10 @@ var Axis = extendClass('Axis', null, Element, {
         tickLabelSel.call(translate, function (d, i, j, context) {
             return transXy[j].x + tickLabelOffset.dx;
         }, tickLabelOffset.dy, context);
+
         axisLineEnter.attr('d', axisLinePath).style(toCssStyle(lineOpts.style));
         axisLineUpdate.attr('d', axisLinePath).style(toCssStyle(lineOpts.style));
+
 
         // For ordinal scales:
         // - any entering ticks are undefined in the old scale
@@ -1552,10 +1641,25 @@ var Axis = extendClass('Axis', null, Element, {
             }
         }
 
+        // Add axis title
+        // Add axis title
+        axis_adaptTitleAlign(titleOpts, opts.location);
+        var axisTitleUpdate = axisUpdate.select('.axis-title').remove();
+        if (titleOpts && titleOpts.enabled !== false) {
+            titleOpts.id = 'axis-title';
+            var title = new Label(context, _this, titleOpts);
+            title.fRender(axisUpdate);
+
+            var titleOffset = axis_titleOffset(titleOpts, opts.location, tickOpts, axisUpdate.bbox(true), tickLabelOffset, tickLabelSel.bbox(true), axisUpdate.select('.axis-title').bbox());
+            var titleSel = axisUpdate.select('.axis-title');
+            var titleTrans = translate(titleSel);
+            titleSel.call(translate, titleTrans[0].x + titleOffset.dx, titleTrans[0].y + titleOffset.dy);
+        }
+
         // Adjust positions
         backgroundUpdate.call(translate, axisUpdate.bbox(true).x, axisUpdate.bbox(false).y, context);
     },
-    fOptions: function() {
+    fOptions: function () {
         if (!arguments.length) {
             return this.options;
         } else {
@@ -1571,8 +1675,18 @@ var Axis = extendClass('Axis', null, Element, {
             return this;
         }
     },
-    fGetLineXY: function () {
-        // Return x, yThe st
+    fRange: function () {
+        if (!arguments.length) {
+            return this.options.range;
+        } else {
+            this.options.range = arguments[0];
+            return this;
+        }
+    },
+    fAxisLineCoordinates: function () {
+        // Return x, y of axis line
+        var bbox = d3.select('.axis-line').bbox();
+        return {'x': bbox.x, 'y': bbox.y};
     }
 });
 
@@ -1604,7 +1718,7 @@ function axis_tickOffset(tickOpts, tickSize, axisLocation) {
 
 function axis_adaptTickOpts(tickOpts, axisLocation) {
     axis_adaptTicksPosition(tickOpts, axisLocation);
-    axis_adaptTickLabelAlign(tickOpts, axisLocation);
+    axis_adaptLabelAlign(tickOpts.label, axisLocation);
 }
 
 function axis_adaptTicksPosition(tickOpts, axisLocation) {
@@ -1618,34 +1732,47 @@ function axis_adaptTicksPosition(tickOpts, axisLocation) {
 }
 
 function axis_adaptTickPosition(axisLocation, tickPosition) {
-    if (tickPosition === 'cross') {
-        return tickPosition;
+    return axis_adaptPosition(axisLocation, tickPosition);
+}
+
+function axis_adaptPosition(axisLocation, pos) {
+    if (pos === 'cross') {
+        return pos;
     }
 
     if (axisLocation === 'top') {
-        return tickPosition === 'left' ? 'below' : (tickPosition === 'right' ? 'top' : tickPosition);
+        return pos === 'left' ? 'below' : (pos === 'right' ? 'top' : pos);
     } else if (axisLocation === 'bottom') {
-        return tickPosition === 'right' ? 'above' : (tickPosition === 'left' ? 'below' : tickPosition);
+        return pos === 'right' ? 'above' : (pos === 'left' ? 'below' : pos);
     } else if (axisLocation === 'left') {
-        return tickPosition === 'above' ? 'right' : (tickPosition === 'below' ? 'left' : tickPosition);
+        return pos === 'above' ? 'right' : (pos === 'below' ? 'left' : pos);
     } else if (axisLocation === 'right') {
-        return tickPosition === 'below' ? 'left' : (tickPosition === 'above' ? 'right' : tickPosition);
+        return pos === 'below' ? 'left' : (pos === 'above' ? 'right' : pos);
     } else {
-        return tickPosition;
+        return pos;
     }
 }
 
-function axis_adaptTickLabelAlign(tickOpts, axisLocation) {
-    var labelOpts = tickOpts.label;
+function axis_adaptAnchor(axisLocation, anchor) {
+    if (axisLocation === 'top' || axisLocation === 'bottom') {
+        return anchor === 'bottom' ? 'left' : (anchor === 'top' ? 'rigth' : anchor);
+    } else if (axisLocation === 'left' || axisLocation === 'right') {
+        return anchor === 'left' ? 'bottom' : (anchor === 'right' ? 'top' : anchor);
+    } else {
+        return anchor;
+    }
+}
+
+function axis_adaptLabelAlign(labelOpts, axisLocation) {
     if (!labelOpts) {
         return;
     }
     if (axisLocation === 'top' || axisLocation === 'bottom') {
-        labelOpts.align = labelOpts.align === 'auto' ? 'center': (labelOpts.align || 'center');
-        labelOpts.verticalAlign = labelOpts.verticalAlign === 'auto' ? (labelOpts.position === 'below' ? 'top' : 'bottom'): (labelOpts.verticalAlign || (labelOpts.position === 'below' ? 'top' : 'bottom'));
+        labelOpts.align = labelOpts.align === 'auto' ? 'center' : (labelOpts.align || 'center');
+        labelOpts.verticalAlign = labelOpts.verticalAlign === 'auto' ? (labelOpts.position === 'below' ? 'top' : 'bottom') : (labelOpts.verticalAlign || (labelOpts.position === 'below' ? 'top' : 'bottom'));
     } else {
-        labelOpts.align = labelOpts.align === 'auto' ? (labelOpts.position === 'left' ? 'right':'left') : (labelOpts.align || (labelOpts.position === 'left' ? 'right': 'left'));
-        labelOpts.verticalAlign = labelOpts.verticalAlign === 'auto' ? 'center': (labelOpts.verticalAlign || 'center');
+        labelOpts.align = labelOpts.align === 'auto' ? (labelOpts.position === 'left' ? 'right' : 'left') : (labelOpts.align || (labelOpts.position === 'left' ? 'right' : 'left'));
+        labelOpts.verticalAlign = labelOpts.verticalAlign === 'auto' ? 'center' : (labelOpts.verticalAlign || 'center');
     }
 }
 
@@ -1675,20 +1802,79 @@ function axis_tickLabelOffset(tickOpts, labelBBox, axisLocation) {
     if (axisLocation === 'bottom' || axisLocation === 'top') {
         if (labelOpts.position === 'above') {
             tickSize = majorTickPos !== 'below' ? majorTickSize : (minorTickPos !== 'below' ? minorTickSize : 0);
-            offset.dy =  -(tickSize + labelGap + labelBBox.height);
+            offset.dy = -(tickSize + labelGap + labelBBox.height);
         } else {
-            tickSize = majorTickPos !== 'above' ? majorTickSize : (minorTickPos !== 'above' ? minorTickSize: 0);
+            tickSize = majorTickPos !== 'above' ? majorTickSize : (minorTickPos !== 'above' ? minorTickSize : 0);
             offset.dy = tickSize + labelGap;
         }
     } else if (axisLocation === 'left' || axisLocation === 'right') {
         if (labelOpts.position === 'left') {
             tickSize = (majorTickPos !== 'right') ? majorTickSize : (minorTickPos !== 'right' ? minorTickSize : 0);
-            offset.dx = hAlign === 'center' ? -(tickSize + labelGap) : (hAlign === 'left' ? -(tickSize + labelGap + labelBBox.width): -(tickSize + labelGap));
+            offset.dx = hAlign === 'center' ? -(tickSize + labelGap) : (hAlign === 'left' ? -(tickSize + labelGap + labelBBox.width) : -(tickSize + labelGap));
             offset.dy = -labelBBox.height / 2;
         } else {
-            tickSize = majorTickPos !== 'left' ? majorTickSize :(minorTickPos !== 'left') ? minorTickSize : 0;
+            tickSize = majorTickPos !== 'left' ? majorTickSize : (minorTickPos !== 'left') ? minorTickSize : 0;
             offset.dx = hAlign === 'right' ? (tickSize + labelGap + labelBBox.width) : (tickSize + labelGap);
             offset.dy = -labelBBox.height / 2;
+        }
+    }
+    return offset;
+}
+
+/**
+ * Always set horizontal or vertical align to center under different case to simply coordinates calculation of rotated title.
+ *
+ * @param titleOpts
+ * @param axisLocation
+ */
+function axis_adaptTitleAlign(titleOpts, axisLocation) {
+    if (!titleOpts) {
+        return;
+    }
+    if (axisLocation === 'top' || axisLocation === 'bottom') {
+        titleOpts.verticalAlign = titleOpts.position === 'above' ? 'bottom' : 'top';
+    } else {
+        titleOpts.align = titleOpts.position === 'left' ? 'right' : 'left';
+    }
+}
+
+function axis_titleOffset(titleOpts, axisLocation, tickOpts, axisBBox, tickLabelOffset, labelBBox, titleBBox) {
+    var offset = {'dx': 0, 'dy': 0},
+        titlePos = titleOpts.position,
+        titleGap = titleOpts.gap,
+        majorOpts = tickOpts.major,
+        minorOpts = tickOpts.minor,
+        majorTickPos = axis_adaptTickPosition(axisLocation, majorOpts.position),
+        minorTickPos = axis_adaptTickPosition(axisLocation, minorOpts.position),
+        majorTickSize = majorOpts.enabled ? majorOpts.size : 0,
+        minorTickSize = minorOpts.enabled ? minorOpts.size : 0,
+        labelPos = tickOpts.label.position,
+        labelGap = tickOpts.label.gap,
+        hAlign = titleOpts.align,
+        vAlign = titleOpts.verticalAlign;
+
+    var tickSize = 0, labelOffset = 0;
+    if (axisLocation === 'top' || axisLocation === 'bottom') {
+        offset.dx = hAlign === 'right' ? (axisBBox.width + axisBBox.x) : (hAlign === 'center' ? (axisBBox.width + axisBBox.x ) / 2 : axisBBox.x);
+        if (titlePos === 'above' || (axisLocation === 'bottom' && titlePos !== 'above')) {
+            offset.dy -= (majorTickPos !== 'below' ? majorTickSize : (minorTickPos !== 'below' ? minorTickSize : 0));
+            offset.dy -= (labelPos === 'above' ? (labelBBox.height + labelGap) : 0 );
+            offset.dy -= titleGap;
+        } else if (titlePos === 'below' || (axisLocation === 'top' && titlePos !== 'below')) {
+            offset.dy += (majorTickPos !== 'above' ? majorTickSize : (minorTickPos !== 'above' ? minorTickSize : 0));
+            offset.dy += (labelPos === 'below') ? (labelBBox.height + labelGap) : 0;
+            offset.dy += titleGap;
+        }
+    } else if (axisLocation === 'left' || axisLocation === 'right') {
+        offset.dy = vAlign === 'bottom' ? (axisBBox.height + axisBBox.y) : (vAlign === 'center' ? (axisBBox.height + axisBBox.y) / 2 : axisBBox.y);
+        if (titlePos === 'left' || (axisLocation === 'right' && titlePos !== 'right')) {
+            offset.dx -= (majorTickPos !== 'right' ? majorTickSize : (minorTickPos !== 'right' ? minorTickSize : 0));
+            offset.dx -= (labelPos === 'left' ? (labelBBox.width + labelGap) : 0);
+            offset.dx -= titleGap;
+        } else if (titlePos === 'right' || (axisLocation === 'left' && titlePos !== 'left')) {
+            offset.dx += (majorTickPos !== 'left' ? majorTickSize : (minorTickPos !== 'left' ? minorTickSize : 0));
+            offset.dx += (labelPos === 'right' ? (labelBBox.width + labelGap) : 0);
+            offset.dx += titleGap;
         }
     }
     return offset;

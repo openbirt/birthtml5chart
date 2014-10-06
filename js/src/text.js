@@ -66,7 +66,7 @@ var Text = extendClass('Text', null, Element, {
 		 }, opts)
 		.style('text-anchor', text_adaptTextAnchor(opts.align))
 		.call(rotate, opts.rotate);
-	},
+	}
 });
 
 function text_adaptTextAnchor(align) {

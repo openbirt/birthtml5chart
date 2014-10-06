@@ -12,14 +12,14 @@ d3.selection.prototype.bbox = function (refresh) {
         for (var group = this[j], i = 0, n = group.length; i < n; i++) {
           var node = group[i];
           if (node && (node.nodeName === 'g' || node.nodeName === 'text')) {
-              var bbox = node._bbox;
-              if (!bbox || refresh) {
-                  bbox = bbox || node.getBBox();
+              var _bbox = node._bbox;
+              if (!_bbox || refresh) {
+                  _bbox = bbox(node, refresh);
               }
-              this._bbox.x = (bbox.x < this._bbox.x) ? bbox.x: this._bbox.x;
-              this._bbox.y = (bbox.y < this._bbox.y) ? bbox.y : this._bbox.y;
-              this._bbox.width = (bbox.x + bbox.width > this._bbox.x + this._bbox.width) ? bbox.width: this._bbox.width;
-              this._bbox.height = (bbox.y + bbox.height > this._bbox.y + this._bbox.height) ? bbox.height: this._bbox.height;
+              this._bbox.x = (_bbox.x < this._bbox.x) ? _bbox.x: this._bbox.x;
+              this._bbox.y = (_bbox.y < this._bbox.y) ? _bbox.y : this._bbox.y;
+              this._bbox.width = (_bbox.x + _bbox.width > this._bbox.x + this._bbox.width) ? _bbox.width: this._bbox.width;
+              this._bbox.height = (_bbox.y + _bbox.height > this._bbox.y + this._bbox.height) ? _bbox.height: this._bbox.height;
           };
         }
     }

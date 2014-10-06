@@ -5,6 +5,7 @@ var PATTERN_TRANSLATE = /translate\(.*?\)/g;
 var PATTERN_SCALE = /scale\(.*?\)/g;
 var PATTERN_SKEW = /skew[XY]{1}\(.*?\)/g;
 var PATTERN_MATRIX = /matrix\(.*?\)/g;
+var TRANSPARENCY = 1e-6;
 
 /** Check if specified value is number.
  *
@@ -238,6 +239,10 @@ function bbox(node, refresh) {
         'width': 0,
         'height': 0
     };
+    var rotate = rotateNode(node);
+    if (rotate.degree != 0) {
+        b = rotatedBoundingBox(b, toRadian(rotate.degree));
+    }
     node._bbox = {
         'x': b.x,
         'y': b.y,
@@ -246,6 +251,39 @@ function bbox(node, refresh) {
     };
     return node._bbox;
 }
+
+/**
+ * Compute new bounding box for rotated case.
+ * The default rotation point is centre point of box.
+ *
+ * @link {http://stackoverflow.com/questions/10392658/calculate-the-bounding-boxs-x-y-height-and-width-of-a-rotated-element-via-jav}
+ *
+ * @param bbox
+ * @param radian
+ * @returns {{x: Number, width: Number, y: Number, height: Number}}
+ */
+function rotatedBoundingBox(bbox, radian) {
+    var x = bbox.x, y = bbox.y, width = bbox.width, height = bbox.height, w, h;
+
+    w = Math.sin(radian) * height + Math.cos(radian) * width;
+    h = Math.sin(radian) * width + Math.cos(radian) * height;
+
+    if (w < 0) {
+        w = Math.abs(w);
+    }
+    if (h < 0) {
+        h = Math.abs(h);
+    }
+
+    x += (width - w) / 2;
+    y += (height - h) / 2;
+
+    //# Return an object to the caller representing the x/y and width/height of the calculated .boundingBox
+    return {
+        'x': parseInt(x), 'width': parseInt(w),
+        'y': parseInt(y), 'height': parseInt(h)
+    }
+};
 
 
 /**
@@ -339,6 +377,23 @@ function rotateNode(svgNode, _degree, _mode) {
     var degree = _degree,
         mode = _mode,
         enabled = true;
+
+    if (!degree && !mode) {
+        // Get rotate
+        var tran = svgNode.getAttribute('transform');
+        if (tran) {
+            tran = tran.match(PATTERN_ROTATE);
+            if (tran && tran.length) {
+                tran = tran[0].match(/([\-0-9\.]+)/g);
+                return {'degree': parseFloat(tran[0]), 'x': parseFloat(tran[1] || 0), 'y': parseFloat(tran[2] || 0)};
+            } else {
+                return {'degree': 0, 'x': 0, 'y': 0};
+            }
+        } else {
+            return {'degree': 0, 'x': 0, 'y': 0};
+        }
+    }
+
     if (typeof _degree === 'object' && !mode) {
         degree = _degree.degree;
         mode = _degree.mode;
@@ -370,6 +425,11 @@ function rotateNode(svgNode, _degree, _mode) {
             tran = rotateExpr;
         }
         svgNode.setAttribute('transform', tran);
+    } else {
+        // Remove rotate attribute.
+        tran = svgNode.getAttribute('transform');
+        tran = tran.replace(PATTERN_ROTATE, '');
+        svgNode.setAttribute('transform', tran);
     }
     return svgNode;
 }
@@ -385,6 +445,22 @@ function rotate(d3Sel, _degree, _mode) {
     var degree = _degree,
         mode = _mode,
         enabled = true;
+    if (!degree && !mode) {
+        // Get rotate
+        var tran = d3Sel.attr('transform');
+        if (tran) {
+            tran = tran.match(PATTERN_ROTATE);
+            if (tran && tran.length) {
+                tran = tran[0].match(/([\-0-9\.]+)/g);
+                return {'degree': parseFloat(tran[0]), 'x': parseFloat(tran[1] || 0), 'y': parseFloat(tran[2] || 0)};
+            } else {
+                return {'degree': 0, 'x': 0, 'y': 0};
+            }
+        } else {
+            return {'degree': 0, 'x': 0, 'y': 0};
+        }
+    }
+
     if (typeof _degree === 'object' && !mode) {
         degree = _degree.degree;
         mode = _degree.mode;
@@ -417,6 +493,10 @@ function rotate(d3Sel, _degree, _mode) {
             } else {
                 tran = rotateExpr;
             }
+        } else {
+            // Remove rotate attribute.
+            tran = this.getAttribute('transform');
+            tran = tran.replace(PATTERN_ROTATE, '');
         }
         return tran;
     });

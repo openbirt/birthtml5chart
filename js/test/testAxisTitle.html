@@ -22,12 +22,12 @@
 
         var opts = {
             orient: 'x', // 'x' or 'y'
-            type: 'linear', // 'linear', 'pow', 'log', 'sqrt', 'threshold', 'quantize', 'quantile', 'identity', 'ordinal', 'time'
+            type: 'linear', // 'linear', 'pow', 'log', 'sqrt', 'quantize', 'quantile', 'identity', 'ordinal', 'time'
             domain: [100, 1000], // Actual values or value range to be presented on the axis.
             reversed: false, // default direction of axis is left to right or bottom to top, <code>TRUE</code> means rigth to left or top to bottom.
             location: 'bottom', // 'bottom', 'left', 'top', 'right'. x default is 'bottom', y default is 'left'
             x: 0, // The x coordinate
-            y: 50, // The y coordinate
+            y:200, // The y coordinate
             width: 600,
             height: 200,
             background: {
@@ -38,10 +38,29 @@
             // },
             title: {
                 enabled: true,
-                position: 'bottom', // 'below', 'above', 'left', 'right'
-                anchor: 'center', // 'left', 'center', 'right' , 'top', 'bottom'
-                dx: 0,
-                dy: 0
+                position: 'below', // 'below', 'above', 'left', 'right'
+                data: 'Axis Title',
+                background: {
+                    fill: 'red',
+                    fillOpacity:1
+                },
+                font: {
+                    fontSize: '20px'
+                },
+                fontBorder: {
+                    stroke: 'green',
+                    strokeWidth: 2,
+                    strokeOpacity: 0.5
+                },
+                fontColor: {
+                    fill: 'blue'
+                },
+                align: 'left',
+                verticalAlign: 'bottom',
+                rotate: {
+                    degree: -45,
+                    mode: 'middle'
+                }
             },
             line: {
                 enabled: true,
@@ -126,37 +145,45 @@
             ]
         }
 
-        opts.tick.major.position = 'above';
-        opts.tick.minor.position = 'above';
-        opts.tick.label.position = 'opposite';
+        opts.location = 'top';
+        opts.title.position = 'below';
+        opts.title.align = 'center';
+        opts.title.verticalAlign = 'center';
+        opts.title.rotate.degree =0;
+
+        opts.tick.major.position = 'below';
+        opts.tick.minor.position = 'below';
+
+        opts.tick.label.position = 'below';
         opts.tick.label.align = 'auto';
+
         var context = new birtchart.Context(svg.node());
         var axis = new birtchart.Axis(context, null, opts);
-        var g = svg.append('g').attr('class', 'canvas');
+        var g = svg.append('g').attr('class', 'group');
         axis.fRender(g);
+
 
         opts = birtchart.util.clone(opts);
-        opts.domain = [300, 3000];
-        opts.tick.minor.style.stroke = 'yellow';
-//        axis.fDomain([300, 3000]);
-        axis.fOptions(opts);
-        axis.fRender(g);
+        opts.orient = 'y';
+        opts.x = 100;
+        opts.y = 500;
+        opts.width = 300;
+        opts.height = 600;
+        opts.location = 'left';
+        opts.tick.major.enabled = true;
+        opts.tick.label.position = 'right';
+        opts.tick.label.align = 'left';
+        opts.title.rotate = {};
+        opts.title.rotate.degree =0;
+        opts.title.rotate.mode = 'middle';
+        opts.title.position = 'left';
+        opts.title.align = 'center';
+        opts.title.verticalAlign = 'center';
 
-//        opts = birtchart.util.clone(opts);
-//        opts.orient = 'y';
-//        opts.x = 100;
-//        opts.y = 300;
-//        opts.width = 300;
-//        opts.height = 600;
-//        opts.location = 'left';
-//        opts.tick.major.enabled = true;
-//        opts.tick.label.position = 'right';
-//        opts.tick.label.align = 'left';
-//
-//        context = new birtchart.Context(svg.node());
-//        axis = new birtchart.Axis(context, null, opts);
-//        g = svg.append('g').attr('class', 'group');
-//        axis.fRender(g);
+        context = new birtchart.Context(svg.node());
+        axis = new birtchart.Axis(context, null, opts);
+        g = svg.append('g').attr('class', 'group');
+        axis.fRender(g);
     })()
 </script>
 </body>

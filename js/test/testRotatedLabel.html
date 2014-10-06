@@ -14,16 +14,17 @@
 	
 	var g = svg.append('g').attr('class', 'group');
 	svg.attr({'x': 0, 'y': 0, 'width': 800, 'height':600});
-	
+
+    var dy = 100;
 	var opts = {
 			id: 't1',
 			x:200,
-			y:0,
-			margin:'10',
-			padding:'10',
+			y:dy,
+			margin:'5',
+			padding:'5',
 			border:{
-				stroke:'red',
-				strokeWidth:5,
+				stroke:'pink',
+				strokeWidth:2,
 				strokeOpacity:0.5
 			}, 
 			background:{
@@ -31,15 +32,15 @@
 				fillOpacity:1
 			},
 			data:['This is a text.'],  
-			align:'', // 'left', 'center', 'right', 'auto' == 'left'
+			align:'left', // 'left', 'center', 'right', 'auto' == 'left'
 			verticalAlign:'top', // 'top', 'center', 'bottom', 'auto' == 'top'
 			format:null, // This is a format pattern or a function
 			font:{
-				fontSize:'30px'
+				fontSize:'20px'
 			},
 			fontBorder: {
 				stroke:'green',
-				strokeWidth:5,
+				strokeWidth:2,
 				strokeOpacity:0.5
 			},
 			fontColor: {
@@ -50,47 +51,46 @@
 				mode:'start'
 			}
 		};
-	
-	
+
+    g.append('line')
+            .attr({'x1': 0, 'y1': dy, 'x2': 500, 'y2': dy})
+            .style({'stroke': 'red', 'stroke-width': 1});
 	var context = new birtchart.Context(svg.node());
 	var label = new birtchart.Label(context, null, opts);
 	label.fRender(g);
-	
+
+    dy += 100;
+    g.append('line')
+            .attr({'x1': 0, 'y1': dy, 'x2': 500, 'y2': dy})
+            .style({'stroke': 'red', 'stroke-width': 1});
 	opts.id = 't2';
-	opts.x = 200;
-	opts.y = 100;
-	opts.align = 'center';
-	opts.rotate.degree = 0;
-	opts.rotate.mode = 'middle';
-	var label = new birtchart.Label(context, null, opts);
-	label.fRender(g);
-	
-		opts.id = 't3';
-	opts.x = 200;
-	opts.y = 200;
-	opts.align = 'right';
-	opts.rotate.degree = 0;
-	opts.rotate.mode = 'middle';
+	opts.y = dy;
+	opts.rotate.degree = -45;
+    opts.verticalAlign = 'top';
 	var label = new birtchart.Label(context, null, opts);
 	label.fRender(g);
 
-	opts.id = 't4';
-	opts.data = 'Hello!\nWelcome to Shanghai!';
-	opts.x = 0;
-	opts.y = 300;
-	opts.rotate.degree = 0;
-	opts.rotate.mode = 'middle';
-	var label = new birtchart.Label(context, null, opts);
-	label.fRender(g);
-	
-	opts.id = 't5';
-	opts.data = 'Hello!\nWelcome to Shanghai!';
-	opts.x = 600;
-	opts.y = 200;
+    dy += 100;
+    g.append('line')
+            .attr({'x1': 0, 'y1': dy, 'x2': 500, 'y2': dy})
+            .style({'stroke': 'red', 'stroke-width': 1});
+	opts.id = 't3';
+	opts.y = dy;
 	opts.rotate.degree = -45;
-	opts.rotate.mode = 'middle';
-	var label = new birtchart.Label(context, null, opts);
+    opts.verticalAlign = 'center';
+    var label = new birtchart.Label(context, null, opts);
 	label.fRender(g);
+
+    dy += 100;
+    g.append('line')
+            .attr({'x1': 0, 'y1': dy, 'x2': 500, 'y2': dy})
+            .style({'stroke': 'red', 'stroke-width': 1});
+    opts.id = 't4';
+    opts.y = dy;
+    opts.rotate.degree = -45;
+    opts.verticalAlign = 'bottom';
+    var label = new birtchart.Label(context, null, opts);
+    label.fRender(g);
 	
 })()
 </script>

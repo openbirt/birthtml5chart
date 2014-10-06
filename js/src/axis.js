@@ -2,7 +2,7 @@ var DEFAULT_MAJOR_TICKS = 10;
 var DEFAULT_MINOR_TICKS = 3;
 var DEFAULT_MAJOR_TICK_SIZE = 5;
 var DEFAULT_MINOR_TICK_SIZE = 3;
-var DEFAULT_TICK_LABEL_GAP = 3;
+var DEFAULT_LABEL_GAP = 3;
 
 var DefaultAxisOptions = {
     orient: 'x', // 'x' or 'y'
@@ -24,9 +24,10 @@ var DefaultAxisOptions = {
     title: {
         enabled: true,
         position: 'bottom', // 'below', 'above', 'left', 'right'
-        anchor: 'center', // 'left', 'center', 'right' , 'top', 'bottom'
-        dx: 0,
-        dy: 0
+        gap: 3
+        //anchor: 'center', // 'left', 'center', 'right' , 'top', 'bottom'
+        //dx: 0,
+        //dy: 0
     },
     line: {
         enabled: true,
@@ -50,11 +51,11 @@ var DefaultAxisOptions = {
         label: {
             enabled: true,
             position: 'below', // 'below', 'above', 'left', 'right' or 'same', 'opposite'. 'same' means same mode with tick.major.position
-            stagger: false,
-            autoDrop: false, // Auto detect overlap label and drop it.
-            gap: 3,
-            dx: 0,
-            dy: 0
+            //stagger: false,
+            //autoDrop: false, // Auto detect overlap label and drop it.
+            gap: 3
+            //dx: 0,
+            //dy: 0
         }
     },
     mark: [
@@ -78,6 +79,7 @@ var Axis = extendClass('Axis', null, Element, {
     _fRender: function (_d3Sel) {
         var context = this.context,
             opts = this.options,
+            titleOpts = opts.title,
             lineOpts = opts.line,
             tickOpts = opts.tick,
             majorOpts = tickOpts.major,
@@ -100,8 +102,10 @@ var Axis = extendClass('Axis', null, Element, {
         minorOpts.numbers = minorOpts.numbers || DEFAULT_MINOR_TICKS;
         majorOpts.size = majorOpts.size || DEFAULT_MAJOR_TICK_SIZE;
         minorOpts.size = minorOpts.size || DEFAULT_MINOR_TICK_SIZE;
-        labelOpts.gap = labelOpts.gap || DEFAULT_TICK_LABEL_GAP;
+        labelOpts.gap = labelOpts.gap || DEFAULT_LABEL_GAP;
+        titleOpts.gap = titleOpts.gap || DEFAULT_LABEL_GAP;
         axis_adaptTickOpts(tickOpts, opts.location);
+        axis_adaptLabelAlign(opts.title, opts.location);
 
         // Remove unused axes and new axes.
         axisUpdate.exit().remove();
@@ -211,8 +215,10 @@ var Axis = extendClass('Axis', null, Element, {
         tickLabelSel.call(translate, function (d, i, j, context) {
             return transXy[j].x + tickLabelOffset.dx;
         }, tickLabelOffset.dy, context);
+
         axisLineEnter.attr('d', axisLinePath).style(toCssStyle(lineOpts.style));
         axisLineUpdate.attr('d', axisLinePath).style(toCssStyle(lineOpts.style));
+
 
         // For ordinal scales:
         // - any entering ticks are undefined in the old scale
@@ -240,6 +246,21 @@ var Axis = extendClass('Axis', null, Element, {
             }
         }
 
+        // Add axis title
+        // Add axis title
+        axis_adaptTitleAlign(titleOpts, opts.location);
+        var axisTitleUpdate = axisUpdate.select('.axis-title').remove();
+        if (titleOpts && titleOpts.enabled !== false) {
+            titleOpts.id = 'axis-title';
+            var title = new Label(context, _this, titleOpts);
+            title.fRender(axisUpdate);
+
+            var titleOffset = axis_titleOffset(titleOpts, opts.location, tickOpts, axisUpdate.bbox(true), tickLabelOffset, tickLabelSel.bbox(true), axisUpdate.select('.axis-title').bbox());
+            var titleSel = axisUpdate.select('.axis-title');
+            var titleTrans = translate(titleSel);
+            titleSel.call(translate, titleTrans[0].x + titleOffset.dx, titleTrans[0].y + titleOffset.dy);
+        }
+
         // Adjust positions
         backgroundUpdate.call(translate, axisUpdate.bbox(true).x, axisUpdate.bbox(false).y, context);
     },
@@ -259,7 +280,7 @@ var Axis = extendClass('Axis', null, Element, {
             return this;
         }
     },
-    fRange: function() {
+    fRange: function () {
         if (!arguments.length) {
             return this.options.range;
         } else {
@@ -270,7 +291,7 @@ var Axis = extendClass('Axis', null, Element, {
     fAxisLineCoordinates: function () {
         // Return x, y of axis line
         var bbox = d3.select('.axis-line').bbox();
-        return {'x', bbox.x, 'y': bbox.y};
+        return {'x': bbox.x, 'y': bbox.y};
     }
 });
 
@@ -302,7 +323,7 @@ function axis_tickOffset(tickOpts, tickSize, axisLocation) {
 
 function axis_adaptTickOpts(tickOpts, axisLocation) {
     axis_adaptTicksPosition(tickOpts, axisLocation);
-    axis_adaptTickLabelAlign(tickOpts, axisLocation);
+    axis_adaptLabelAlign(tickOpts.label, axisLocation);
 }
 
 function axis_adaptTicksPosition(tickOpts, axisLocation) {
@@ -316,25 +337,38 @@ function axis_adaptTicksPosition(tickOpts, axisLocation) {
 }
 
 function axis_adaptTickPosition(axisLocation, tickPosition) {
-    if (tickPosition === 'cross') {
-        return tickPosition;
+    return axis_adaptPosition(axisLocation, tickPosition);
+}
+
+function axis_adaptPosition(axisLocation, pos) {
+    if (pos === 'cross') {
+        return pos;
     }
 
     if (axisLocation === 'top') {
-        return tickPosition === 'left' ? 'below' : (tickPosition === 'right' ? 'top' : tickPosition);
+        return pos === 'left' ? 'below' : (pos === 'right' ? 'top' : pos);
     } else if (axisLocation === 'bottom') {
-        return tickPosition === 'right' ? 'above' : (tickPosition === 'left' ? 'below' : tickPosition);
+        return pos === 'right' ? 'above' : (pos === 'left' ? 'below' : pos);
     } else if (axisLocation === 'left') {
-        return tickPosition === 'above' ? 'right' : (tickPosition === 'below' ? 'left' : tickPosition);
+        return pos === 'above' ? 'right' : (pos === 'below' ? 'left' : pos);
     } else if (axisLocation === 'right') {
-        return tickPosition === 'below' ? 'left' : (tickPosition === 'above' ? 'right' : tickPosition);
+        return pos === 'below' ? 'left' : (pos === 'above' ? 'right' : pos);
     } else {
-        return tickPosition;
+        return pos;
     }
 }
 
-function axis_adaptTickLabelAlign(tickOpts, axisLocation) {
-    var labelOpts = tickOpts.label;
+function axis_adaptAnchor(axisLocation, anchor) {
+    if (axisLocation === 'top' || axisLocation === 'bottom') {
+        return anchor === 'bottom' ? 'left' : (anchor === 'top' ? 'rigth' : anchor);
+    } else if (axisLocation === 'left' || axisLocation === 'right') {
+        return anchor === 'left' ? 'bottom' : (anchor === 'right' ? 'top' : anchor);
+    } else {
+        return anchor;
+    }
+}
+
+function axis_adaptLabelAlign(labelOpts, axisLocation) {
     if (!labelOpts) {
         return;
     }
@@ -387,6 +421,65 @@ function axis_tickLabelOffset(tickOpts, labelBBox, axisLocation) {
             tickSize = majorTickPos !== 'left' ? majorTickSize : (minorTickPos !== 'left') ? minorTickSize : 0;
             offset.dx = hAlign === 'right' ? (tickSize + labelGap + labelBBox.width) : (tickSize + labelGap);
             offset.dy = -labelBBox.height / 2;
+        }
+    }
+    return offset;
+}
+
+/**
+ * Always set horizontal or vertical align to center under different case to simply coordinates calculation of rotated title.
+ *
+ * @param titleOpts
+ * @param axisLocation
+ */
+function axis_adaptTitleAlign(titleOpts, axisLocation) {
+    if (!titleOpts) {
+        return;
+    }
+    if (axisLocation === 'top' || axisLocation === 'bottom') {
+        titleOpts.verticalAlign = titleOpts.position === 'above' ? 'bottom' : 'top';
+    } else {
+        titleOpts.align = titleOpts.position === 'left' ? 'right' : 'left';
+    }
+}
+
+function axis_titleOffset(titleOpts, axisLocation, tickOpts, axisBBox, tickLabelOffset, labelBBox, titleBBox) {
+    var offset = {'dx': 0, 'dy': 0},
+        titlePos = titleOpts.position,
+        titleGap = titleOpts.gap,
+        majorOpts = tickOpts.major,
+        minorOpts = tickOpts.minor,
+        majorTickPos = axis_adaptTickPosition(axisLocation, majorOpts.position),
+        minorTickPos = axis_adaptTickPosition(axisLocation, minorOpts.position),
+        majorTickSize = majorOpts.enabled ? majorOpts.size : 0,
+        minorTickSize = minorOpts.enabled ? minorOpts.size : 0,
+        labelPos = tickOpts.label.position,
+        labelGap = tickOpts.label.gap,
+        hAlign = titleOpts.align,
+        vAlign = titleOpts.verticalAlign;
+
+    var tickSize = 0, labelOffset = 0;
+    if (axisLocation === 'top' || axisLocation === 'bottom') {
+        offset.dx = hAlign === 'right' ? (axisBBox.width + axisBBox.x) : (hAlign === 'center' ? (axisBBox.width + axisBBox.x ) / 2 : axisBBox.x);
+        if (titlePos === 'above' || (axisLocation === 'bottom' && titlePos !== 'above')) {
+            offset.dy -= (majorTickPos !== 'below' ? majorTickSize : (minorTickPos !== 'below' ? minorTickSize : 0));
+            offset.dy -= (labelPos === 'above' ? (labelBBox.height + labelGap) : 0 );
+            offset.dy -= titleGap;
+        } else if (titlePos === 'below' || (axisLocation === 'top' && titlePos !== 'below')) {
+            offset.dy += (majorTickPos !== 'above' ? majorTickSize : (minorTickPos !== 'above' ? minorTickSize : 0));
+            offset.dy += (labelPos === 'below') ? (labelBBox.height + labelGap) : 0;
+            offset.dy += titleGap;
+        }
+    } else if (axisLocation === 'left' || axisLocation === 'right') {
+        offset.dy = vAlign === 'bottom' ? (axisBBox.height + axisBBox.y) : (vAlign === 'center' ? (axisBBox.height + axisBBox.y) / 2 : axisBBox.y);
+        if (titlePos === 'left' || (axisLocation === 'right' && titlePos !== 'right')) {
+            offset.dx -= (majorTickPos !== 'right' ? majorTickSize : (minorTickPos !== 'right' ? minorTickSize : 0));
+            offset.dx -= (labelPos === 'left' ? (labelBBox.width + labelGap) : 0);
+            offset.dx -= titleGap;
+        } else if (titlePos === 'right' || (axisLocation === 'left' && titlePos !== 'left')) {
+            offset.dx += (majorTickPos !== 'left' ? majorTickSize : (minorTickPos !== 'left' ? minorTickSize : 0));
+            offset.dx += (labelPos === 'right' ? (labelBBox.width + labelGap) : 0);
+            offset.dx += titleGap;
         }
     }
     return offset;
