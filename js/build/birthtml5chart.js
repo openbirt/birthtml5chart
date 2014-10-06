@@ -1211,7 +1211,10 @@ var Text = extendClass('Text', null, Element, {
 
 		textUpdate.exit().remove();
 		textUpdate.enter().append('text').attr('class', classNames);
-		
+        if (opts.id) {
+            _d3Sel.selectAll(toClassKey(classNames)).attr('id', opts.id);
+        }
+
 		textUpdate
 		.each(function(d, i){
 			var _this = d3.select(this), texts = d.split('\n');
@@ -1300,6 +1303,10 @@ var Label = extendClass('Label', null, Element, {
 
         labelUpdate.exit().remove();
         labelUpdate.enter().append('g').attr('class', classNames);
+        if (opts.id) {
+            _d3Sel.selectAll(toClassKey(classNames)).attr('id', opts.id);
+        }
+
         labelUpdate.call(translate, opts.x || 0, opts.y || 0, this.context)
             .each(function (d, i) {
                 var
@@ -1506,6 +1513,9 @@ var Axis = extendClass('Axis', null, Element, {
         axisUpdate.exit().remove();
         axisUpdate.enter().append('g').attr('class', classNames)
             .call(translate, opts.x || 0, opts.y || 0, this.context);
+        if (opts.id) {
+            _d3Sel.selectAll(toClassKey(classNames)).attr('id', opts.id);
+        }
 
         // Render background and border.
         if (opts.background || opts.border) {

@@ -42,6 +42,10 @@ var Label = extendClass('Label', null, Element, {
 
         labelUpdate.exit().remove();
         labelUpdate.enter().append('g').attr('class', classNames);
+        if (opts.id) {
+            _d3Sel.selectAll(toClassKey(classNames)).attr('id', opts.id);
+        }
+
         labelUpdate.call(translate, opts.x || 0, opts.y || 0, this.context)
             .each(function (d, i) {
                 var
